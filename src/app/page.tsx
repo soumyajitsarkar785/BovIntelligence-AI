@@ -13,7 +13,9 @@ import {
   Scan,
   Cpu,
   History as HistoryIcon,
-  Bell
+  Bell,
+  Search,
+  Menu
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -41,7 +43,7 @@ export default function BovindexPro() {
   const [result, setResult] = useState<ScanEntry | null>(null);
   const [history, setHistory] = useState<ScanEntry[]>([]);
   const [loadingStep, setLoadingStep] = useState('');
-  const [activeTab, setActiveTab] = useState<'scan' | 'history' | 'profile'>('scan');
+  const [activeTab, setActiveTab] = useState<'monitor' | 'ledger' | 'settings'>('monitor');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -68,7 +70,7 @@ export default function BovindexPro() {
     setScanProgress(0);
     
     try {
-      setLoadingStep('Initializing Neural Engine...');
+      setLoadingStep('Initializing Vision Engine...');
       setScanProgress(15);
       
       const classification = await classifyBovineBreed({ photoDataUri: dataUri });
@@ -76,7 +78,7 @@ export default function BovindexPro() {
       if (!classification.isBovine) {
         toast({
           title: "Detection Failed",
-          description: "No bovine signature detected. Please use a clear photo.",
+          description: "No bovine signature detected. Please use a clear photo of cattle or buffalo.",
           variant: "destructive"
         });
         setIsScanning(false);
@@ -92,7 +94,7 @@ export default function BovindexPro() {
         generateBovineCareGuide({ breedName: classification.breedName, lifeStage: 'adult' })
       ]);
 
-      setLoadingStep('Finalizing Intelligence Report...');
+      setLoadingStep('Synthesizing Professional Report...');
       setScanProgress(85);
 
       const entry: ScanEntry = {
@@ -113,16 +115,16 @@ export default function BovindexPro() {
         setIsScanning(false);
         setLoadingStep('');
         toast({
-          title: "Analysis Successful",
-          description: `${classification.breedName} identified with ${classification.confidence} confidence.`,
+          title: "Intelligence Ready",
+          description: `${classification.breedName} analyzed with ${classification.confidence} confidence.`,
         });
-      }, 800);
+      }, 1000);
 
     } catch (error) {
       console.error(error);
       toast({
-        title: "System Error",
-        description: "Network timeout. Please check your connection.",
+        title: "Connection Error",
+        description: "Unable to reach AI services. Please check your internet connection.",
         variant: "destructive"
       });
       setIsScanning(false);
@@ -136,7 +138,7 @@ export default function BovindexPro() {
       setResult(null);
       setPhoto(null);
     }
-    toast({ title: "Archived", description: "Record deleted successfully." });
+    toast({ title: "Removed", description: "Analytical record deleted from ledger." });
   };
 
   const resetAll = () => {
@@ -149,82 +151,106 @@ export default function BovindexPro() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col font-body pb-24 lg:pb-0">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-body pb-20 lg:pb-0">
       <Toaster />
       
-      <header className="h-16 lg:h-20 bg-white/80 backdrop-blur-md border-b sticky top-0 z-[60] px-4 lg:px-10 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 bg-[#0F172A] rounded-xl flex items-center justify-center text-accent shadow-lg shadow-accent/20">
-            <Cpu className="h-5 w-5" />
+      {/* Desktop Header */}
+      <header className="hidden lg:flex h-20 bg-white border-b sticky top-0 z-50 px-10 items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-10 bg-[#0F172A] rounded-xl flex items-center justify-center text-accent shadow-lg shadow-accent/20">
+            <Cpu className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-lg font-bold font-headline text-[#0F172A] leading-none">Bovindex <span className="text-accent">Pro</span></h1>
-            <p className="text-[9px] uppercase tracking-widest text-slate-400 font-black mt-1">v3.0.1 Intelligence</p>
+            <h1 className="text-xl font-bold font-headline text-[#0F172A]">Bovindex <span className="text-accent">Pro</span></h1>
+            <p className="text-[10px] uppercase tracking-widest text-slate-400 font-black">v3.2.0 Intelligence Platform</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="rounded-full relative hover:bg-slate-100 hidden sm:flex">
+        <div className="flex items-center gap-6">
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Search Ledger..." 
+              className="bg-slate-50 border-none rounded-xl h-10 pl-10 pr-4 w-64 text-sm focus:ring-2 focus:ring-accent/20 transition-all"
+            />
+          </div>
+          <Button variant="ghost" size="icon" className="rounded-full relative hover:bg-slate-100">
             <Bell className="h-5 w-5 text-slate-500" />
             <span className="absolute top-2 right-2 h-2 w-2 bg-accent rounded-full border-2 border-white"></span>
           </Button>
-          <div className="h-9 w-9 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm cursor-pointer">
-            <Image src="https://picsum.photos/seed/user-dev/100/100" alt="User" width={36} height={36} />
+          <div className="h-10 w-10 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden">
+             <Image src="https://picsum.photos/seed/user-pro/100/100" alt="Profile" width={40} height={40} />
           </div>
         </div>
       </header>
 
-      <main className="flex-1 p-4 lg:p-10 max-w-7xl mx-auto w-full overflow-x-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
+      {/* Mobile Top Bar */}
+      <div className="lg:hidden flex h-16 bg-white border-b px-4 items-center justify-between sticky top-0 z-50">
+        <div className="flex items-center gap-2">
+           <Cpu className="h-5 w-5 text-accent" />
+           <span className="font-headline font-bold text-lg">Bovindex <span className="text-accent">Pro</span></span>
+        </div>
+        <Button variant="ghost" size="icon" className="rounded-full">
+          <Menu className="h-5 w-5" />
+        </Button>
+      </div>
+
+      <main className="flex-1 p-4 lg:p-10 max-w-7xl mx-auto w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
+          {/* Analysis Column */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="bg-white rounded-[2rem] overflow-hidden shadow-2xl shadow-slate-200/50 border border-white/50 relative aspect-[4/5] lg:aspect-auto lg:h-[600px] group">
+            <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-2xl shadow-slate-200/50 border border-white relative aspect-[4/5] lg:aspect-square group">
               {!photo ? (
                 <div 
                   onClick={() => fileInputRef.current?.click()}
-                  className="h-full flex flex-col items-center justify-center p-8 text-center cursor-pointer hover:bg-slate-50 transition-colors"
+                  className="h-full flex flex-col items-center justify-center p-10 text-center cursor-pointer hover:bg-slate-50 transition-all"
                 >
-                  <div className="h-24 w-24 rounded-full bg-accent/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                    <Scan className="h-12 w-12 text-accent" />
+                  <div className="h-28 w-28 rounded-[2rem] bg-accent/5 flex items-center justify-center mb-8 group-hover:scale-105 transition-transform duration-500">
+                    <Scan className="h-14 w-14 text-accent" />
                   </div>
-                  <h3 className="text-2xl font-bold font-headline mb-2 text-[#0F172A]">AI Vision Analysis</h3>
-                  <p className="text-slate-400 text-sm max-w-xs mb-8 font-medium">
-                    Upload or capture a bovine subject for genomic profiling and care insights.
+                  <h3 className="text-3xl font-bold font-headline mb-4 text-[#0F172A]">Vision Intelligence</h3>
+                  <p className="text-slate-500 text-sm max-w-xs mb-10 leading-relaxed font-medium">
+                    Analyze breed phenotype, genomic markers, and specialized health protocols in seconds.
                   </p>
-                  <Button className="rounded-2xl h-14 px-10 bg-[#0F172A] hover:bg-slate-800 text-white font-bold gap-3 shadow-xl">
-                    <Plus className="h-6 w-6" /> Start New Scan
+                  <Button className="rounded-2xl h-14 px-10 bg-[#0F172A] hover:bg-slate-800 text-white font-bold gap-3 shadow-xl shadow-slate-200">
+                    <Plus className="h-6 w-6" /> Initialize Scan
                   </Button>
                 </div>
               ) : (
-                <div className="h-full relative overflow-hidden">
+                <div className="h-full relative overflow-hidden bg-slate-900">
                   <Image
                     src={photo}
                     alt="Bovine Neural Feed"
                     fill
-                    className={`object-cover transition-all duration-700 ${isScanning ? 'scale-110 brightness-50 blur-[2px]' : ''}`}
+                    className={`object-cover transition-all duration-1000 ${isScanning ? 'scale-110 brightness-50' : 'scale-100'}`}
                   />
                   
                   {isScanning && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center z-50 p-6">
-                      <div className="w-full max-w-xs space-y-4 bg-white/10 backdrop-blur-xl p-6 rounded-[2rem] border border-white/20">
-                        <div className="flex justify-between items-center text-white">
-                          <span className="text-[10px] font-black uppercase tracking-widest animate-pulse">{loadingStep}</span>
-                          <span className="text-lg font-bold">{scanProgress}%</span>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center z-50 p-8">
+                      <div className="w-full max-w-xs space-y-6 bg-white/10 backdrop-blur-2xl p-8 rounded-[2.5rem] border border-white/20 shadow-2xl">
+                        <div className="flex justify-between items-end">
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Processing</span>
+                            <h4 className="text-white font-bold text-sm animate-pulse">{loadingStep}</h4>
+                          </div>
+                          <span className="text-2xl font-bold text-accent">{scanProgress}%</span>
                         </div>
-                        <Progress value={scanProgress} className="h-2 bg-white/20" />
+                        <Progress value={scanProgress} className="h-2.5 bg-white/20" />
                       </div>
                       <div className="scan-line !bg-accent" />
                     </div>
                   )}
 
                   {!isScanning && (
-                    <div className="absolute bottom-6 left-0 right-0 px-6 flex justify-center gap-3">
+                    <div className="absolute bottom-8 left-0 right-0 px-8 flex justify-center gap-4">
                       <Button 
                         onClick={resetAll}
                         variant="secondary" 
-                        className="rounded-2xl h-12 px-6 bg-white/90 backdrop-blur-xl hover:bg-white text-[#0F172A] font-bold gap-2 shadow-2xl"
+                        className="rounded-2xl h-14 px-8 bg-white/90 backdrop-blur-xl hover:bg-white text-[#0F172A] font-bold gap-3 shadow-2xl"
                       >
-                        <RefreshCcw className="h-4 w-4" /> Retake
+                        <RefreshCcw className="h-5 w-5" /> Retake Scan
                       </Button>
                     </div>
                   )}
@@ -241,58 +267,62 @@ export default function BovindexPro() {
               />
             </div>
 
-            <div className="lg:block hidden bg-white rounded-[2.5rem] p-8 shadow-xl shadow-slate-200/50 border border-white/50">
+            <div className="hidden lg:block bg-white rounded-[2.5rem] p-8 shadow-xl shadow-slate-200/50 border border-white">
                <ScanLedger 
                   history={history} 
                   onSelect={(entry) => {
                     setPhoto(entry.photoDataUri);
                     setResult(entry);
-                    setActiveTab('scan');
+                    setActiveTab('monitor');
                   }}
                   onDelete={handleDeleteEntry}
                 />
             </div>
           </div>
 
+          {/* Results Column */}
           <div className="lg:col-span-7">
             {isScanning ? (
-              <div className="space-y-8 animate-pulse p-4 lg:p-0">
-                <Skeleton className="h-10 w-48 rounded-2xl" />
-                <Skeleton className="h-[450px] w-full rounded-[2.5rem]" />
+              <div className="space-y-8 p-4 lg:p-0">
+                <div className="space-y-2">
+                  <Skeleton className="h-10 w-64 rounded-2xl" />
+                  <Skeleton className="h-4 w-48 rounded-xl" />
+                </div>
+                <Skeleton className="h-[600px] w-full rounded-[2.5rem]" />
               </div>
             ) : result ? (
-              <div className="p-1 lg:p-0">
+              <div className="p-2 lg:p-0">
                 <AnalysisView result={result} />
               </div>
             ) : (
-              <div className="h-full flex flex-col justify-center space-y-10 py-10 lg:py-0 px-4">
+              <div className="h-full flex flex-col justify-center space-y-12 py-10 lg:py-0 px-4">
                 <div className="space-y-6">
-                  <Badge className="bg-accent/10 text-accent border-none px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
-                    Ready for analysis
+                  <Badge className="bg-accent/10 text-accent border-none px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em]">
+                    System Online
                   </Badge>
-                  <h2 className="text-5xl lg:text-7xl font-headline font-bold text-[#0F172A] leading-tight">
-                    Professional <br />
-                    <span className="text-accent">Cattle</span> Intelligence
+                  <h2 className="text-5xl lg:text-8xl font-headline font-bold text-[#0F172A] leading-[1.1] tracking-tight">
+                    Premium <br />
+                    <span className="text-accent">Genomic</span> Insights
                   </h2>
-                  <p className="text-lg text-slate-500 font-medium max-w-lg leading-relaxed">
-                    Instantly identify breeds, analyze traits, and receive expert veterinary protocols with our vision engine.
+                  <p className="text-xl text-slate-500 font-medium max-w-xl leading-relaxed">
+                    Instantly classify global breeds and receive expert veterinary-grade protocols with our advanced vision core.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {[
-                    { icon: Zap, title: "Neural Vision", desc: "Supports 300+ global breeds." },
-                    { icon: Dna, title: "Genomic Mapping", desc: "Physical marker detection." },
-                    { icon: HeartPulse, title: "Expert Care", desc: "Specific nutrition & health plans." },
-                    { icon: ShieldCheck, title: "Secure Ledger", desc: "Private encrypted cloud sync." },
+                    { icon: Zap, title: "Neural Vision", desc: "300+ global breed database" },
+                    { icon: Dna, title: "Marker Analysis", desc: "Phenotype structural detection" },
+                    { icon: HeartPulse, title: "Expert Care", desc: "Tailored health & nutrition" },
+                    { icon: ShieldCheck, title: "Secure Vault", desc: "Encrypted history ledger" },
                   ].map((item, i) => (
-                    <div key={i} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-md flex gap-4 items-center group hover:bg-slate-50 transition-colors">
-                      <div className="h-12 w-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#0F172A] shrink-0 group-hover:bg-white transition-colors">
-                        <item.icon className="h-6 w-6" />
+                    <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex gap-5 items-center group hover:bg-slate-50 transition-all duration-300">
+                      <div className="h-14 w-14 rounded-2xl bg-slate-50 flex items-center justify-center text-[#0F172A] shrink-0 group-hover:bg-white group-hover:scale-110 transition-all">
+                        <item.icon className="h-7 w-7" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-base text-[#0F172A]">{item.title}</h4>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{item.desc}</p>
+                        <h4 className="font-bold text-lg text-[#0F172A]">{item.title}</h4>
+                        <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-1">{item.desc}</p>
                       </div>
                     </div>
                   ))}
@@ -303,11 +333,12 @@ export default function BovindexPro() {
         </div>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t h-20 px-8 flex items-center justify-between lg:hidden z-[100] rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+      {/* Mobile Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-2xl border-t h-20 px-10 flex items-center justify-between lg:hidden z-50 rounded-t-[2.5rem] shadow-2xl">
         <Button 
           variant="ghost" 
-          onClick={() => setActiveTab('scan')}
-          className={`flex flex-col gap-1 h-auto py-2 rounded-2xl ${activeTab === 'scan' ? 'text-accent' : 'text-slate-400'}`}
+          onClick={() => setActiveTab('monitor')}
+          className={`flex flex-col gap-1 h-auto py-2 rounded-2xl ${activeTab === 'monitor' ? 'text-accent' : 'text-slate-400'}`}
         >
           <LayoutDashboard className="h-5 w-5" />
           <span className="text-[10px] font-bold">Monitor</span>
@@ -315,8 +346,11 @@ export default function BovindexPro() {
         
         <div className="relative -top-10">
           <Button 
-            onClick={() => fileInputRef.current?.click()}
-            className="h-16 w-16 rounded-full bg-accent hover:bg-accent/90 shadow-2xl shadow-accent/40 text-white flex items-center justify-center p-0 ring-4 ring-white"
+            onClick={() => {
+              setActiveTab('monitor');
+              fileInputRef.current?.click();
+            }}
+            className="h-16 w-16 rounded-full bg-accent hover:bg-accent/90 shadow-[0_15px_40px_rgba(251,113,133,0.4)] text-white flex items-center justify-center p-0 ring-8 ring-white"
           >
             <Camera className="h-8 w-8" />
           </Button>
@@ -324,29 +358,30 @@ export default function BovindexPro() {
 
         <Button 
           variant="ghost" 
-          onClick={() => setActiveTab('history')}
-          className={`flex flex-col gap-1 h-auto py-2 rounded-2xl ${activeTab === 'history' ? 'text-accent' : 'text-slate-400'}`}
+          onClick={() => setActiveTab('ledger')}
+          className={`flex flex-col gap-1 h-auto py-2 rounded-2xl ${activeTab === 'ledger' ? 'text-accent' : 'text-slate-400'}`}
         >
           <HistoryIcon className="h-5 w-5" />
           <span className="text-[10px] font-bold">Ledger</span>
         </Button>
-      </div>
+      </nav>
 
-      {activeTab === 'history' && (
-        <div className="fixed inset-0 bg-[#F8FAFC] z-[110] lg:hidden p-4 overflow-y-auto animate-in slide-in-from-right duration-300">
+      {/* Mobile History View */}
+      {activeTab === 'ledger' && (
+        <div className="fixed inset-0 bg-[#F8FAFC] z-[60] lg:hidden p-6 overflow-y-auto animate-in slide-in-from-right duration-300">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-headline font-bold text-[#0F172A]">Herd Ledger</h2>
-            <Button variant="ghost" size="icon" onClick={() => setActiveTab('scan')} className="rounded-full bg-white shadow-md">
-              <Plus className="h-6 w-6 rotate-45" />
+            <Button variant="ghost" size="icon" onClick={() => setActiveTab('monitor')} className="rounded-full bg-white shadow-md">
+              <Plus className="h-6 w-6 rotate-45 text-slate-400" />
             </Button>
           </div>
-          <div className="bg-white rounded-[2rem] p-6 shadow-xl border border-slate-100">
+          <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-slate-100">
              <ScanLedger 
                 history={history} 
                 onSelect={(entry) => {
                   setPhoto(entry.photoDataUri);
                   setResult(entry);
-                  setActiveTab('scan');
+                  setActiveTab('monitor');
                 }}
                 onDelete={handleDeleteEntry}
               />

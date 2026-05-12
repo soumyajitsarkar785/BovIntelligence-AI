@@ -21,7 +21,7 @@ export interface ScanEntry {
   };
 }
 
-const STORAGE_KEY = 'bovindex_pro_ledger_v3';
+const STORAGE_KEY = 'bovindex_pro_ledger_v3_stable';
 
 export function saveScan(entry: ScanEntry) {
   if (typeof window === 'undefined') return;
