@@ -63,6 +63,22 @@ Summary: ${result.diagnosticNote}
     toast({ title: "Copied", description: "Clinical text copied to clipboard." });
   };
 
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `BovIntelligence AI Report - ${result.breedName}`,
+          text: `Check out this bovine breed analysis for ${result.breedName}. Diagnostic ID: ${result.id}`,
+          url: window.location.href,
+        });
+      } catch (err) {
+        toast({ title: "Share Failed", description: "Unable to share at this time.", variant: "destructive" });
+      }
+    } else {
+      handleCopyText();
+    }
+  };
+
   const handleDownloadPDF = async () => {
     const element = document.getElementById('report-content');
     if (!element) return;
@@ -74,13 +90,20 @@ Summary: ${result.diagnosticNote}
     });
 
     try {
-      // High fidelity capture for professional printing
+      // Use high scale for clarity in production
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
-        windowWidth: 794, // Standard A4 pixel width at 96 DPI
+        // Ensure the element is visible during capture
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.getElementById('report-content');
+          if (clonedElement) {
+            clonedElement.style.display = 'block';
+            clonedElement.style.position = 'static';
+          }
+        }
       });
 
       const imgData = canvas.toDataURL('image/png', 1.0);
@@ -94,11 +117,10 @@ Summary: ${result.diagnosticNote}
       const ratio = pdfWidth / imgWidth;
       const totalCanvasHeightInPDF = imgHeight * ratio;
 
-      // Handle multi-page logically: if it fits on one page, keep it one page.
+      // Handle multi-page logically
       if (totalCanvasHeightInPDF <= pdfHeight) {
         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, totalCanvasHeightInPDF);
       } else {
-        // Multi-page logic
         let heightLeft = totalCanvasHeightInPDF;
         let position = 0;
 
@@ -134,7 +156,7 @@ Summary: ${result.diagnosticNote}
     <div className="space-y-6 pb-24 animate-in fade-in duration-700">
       
       {/* Hidden for screen, optimized for High-Resolution PDF Capture */}
-      <div id="report-content" className="bg-white p-10 rounded-none space-y-8 border-t-[8px] border-slate-900 shadow-none text-slate-900 leading-tight">
+      <div id="report-content" className="bg-white p-10 space-y-8 border-t-[8px] border-slate-900 text-slate-900 leading-tight hidden print:block">
         
         {/* Elite Header */}
         <div className="flex justify-between items-start border-b border-slate-100 pb-6">
@@ -155,7 +177,7 @@ Summary: ${result.diagnosticNote}
         </div>
 
         {/* Diagnostic Identification Section */}
-        <div className="grid grid-cols-[1fr_2fr] gap-8 items-center bg-slate-50/40 p-6 rounded-2xl border border-slate-100">
+        <div className="grid grid-cols-[1fr_2.5fr] gap-8 items-center bg-slate-50/40 p-6 rounded-2xl border border-slate-100">
           <div className="relative aspect-square w-full rounded-xl overflow-hidden shadow-sm border border-slate-200">
             <Image src={result.photoDataUri} alt={result.breedName} fill className="object-cover" />
           </div>
@@ -190,10 +212,11 @@ Summary: ${result.diagnosticNote}
           
           <div className="grid gap-6">
             {[
-              { label: 'Historical Genetic Heritage', value: traits.origin, icon: Microscope },
-              { label: 'Production & Milk Quality Metrics', value: traits.milkYieldEstimates, icon: Activity },
-              { label: 'Environmental Adaptation Profile', value: traits.environmentalAdaptability, icon: Zap },
-              { label: 'Ethological & Temperament Assessment', value: traits.temperament, icon: HeartPulse }
+              { label: 'Origin & Historical Genetic Heritage', value: traits.origin, icon: Microscope },
+              { label: 'Production Metrics & Milk Quality Analysis', value: traits.milkYieldEstimates, icon: Activity },
+              { label: 'Ecological Resilience & Environmental Adaptability', value: traits.environmentalAdaptability, icon: Zap },
+              { label: 'Behavioral Ethology & Temperament Profile', value: traits.temperament, icon: HeartPulse },
+              { label: 'Elite Morphological Conformation Standards', value: traits.physicalCharacteristics, icon: Scale }
             ].map((trait, i) => (
               <div key={i} className="space-y-1.5">
                 <div className="flex items-center gap-2">
@@ -208,30 +231,8 @@ Summary: ${result.diagnosticNote}
           </div>
         </div>
 
-        {/* Conformation Analysis */}
-        <div className="space-y-4 pt-2">
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
-            <Scale className="h-4 w-4 text-slate-900" />
-            <h3 className="text-[10px] font-bold uppercase tracking-widest">Morphological Conformation</h3>
-          </div>
-          <div className="grid grid-cols-1 gap-4">
-             <div className="p-4 bg-slate-50/50 rounded-xl border border-slate-100">
-                <p className="text-[11px] text-slate-600 leading-relaxed">
-                  <span className="font-bold text-slate-900 block mb-1 uppercase text-[8px]">Cranial/Thoracic Evidence:</span>
-                  {analysis.cranial} {analysis.thoracic}
-                </p>
-             </div>
-             <div className="p-4 bg-slate-50/50 rounded-xl border border-slate-100">
-                <p className="text-[11px] text-slate-600 leading-relaxed">
-                  <span className="font-bold text-slate-900 block mb-1 uppercase text-[8px]">Body Conformation Standards:</span>
-                  {analysis.body}
-                </p>
-             </div>
-          </div>
-        </div>
-
         {/* Elite Management Protocol */}
-        <div className="space-y-4 pt-2">
+        <div className="space-y-4 pt-4">
           <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
             <FileText className="h-4 w-4 text-slate-900" />
             <h3 className="text-[10px] font-bold uppercase tracking-widest">Elite Management Protocols</h3>
@@ -255,37 +256,74 @@ Summary: ${result.diagnosticNote}
         </div>
       </div>
       
+      {/* Visual Analysis Grid for Screen */}
+      <div className="space-y-6 px-2">
+         <Card className="overflow-hidden rounded-[2.5rem] border-none shadow-2xl relative">
+            <div className="relative aspect-video w-full">
+               <Image src={result.photoDataUri} alt={result.breedName} fill className="object-cover" />
+               <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-transparent to-transparent" />
+               <div className="absolute bottom-6 left-6 right-6 flex justify-between items-end">
+                  <div className="space-y-1">
+                     <p className="text-[10px] font-bold text-accent uppercase tracking-widest">Identification</p>
+                     <h2 className="text-3xl font-headline font-bold text-white leading-none">{result.breedName}</h2>
+                  </div>
+                  <Badge className="bg-accent text-white border-none px-4 py-1.5 rounded-full font-bold text-[10px] uppercase">
+                     {result.confidence} Confidence
+                  </Badge>
+               </div>
+            </div>
+         </Card>
+
+         <div className="grid gap-4">
+            {[
+              { title: 'Genomic Origin', value: traits.origin, icon: Microscope, color: 'text-blue-500', bg: 'bg-blue-50' },
+              { title: 'Production Profile', value: traits.milkYieldEstimates, icon: Activity, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+              { title: 'Adaptability', value: traits.environmentalAdaptability, icon: Zap, color: 'text-orange-500', bg: 'bg-orange-50' }
+            ].map((item, i) => (
+              <Card key={i} className="p-6 rounded-[2rem] border-slate-100 shadow-sm space-y-3">
+                 <div className="flex items-center gap-3">
+                    <div className={`h-10 w-10 rounded-xl ${item.bg} flex items-center justify-center`}>
+                       <item.icon className={`h-5 w-5 ${item.color}`} />
+                    </div>
+                    <h3 className="font-bold text-sm text-[#0F172A]">{item.title}</h3>
+                 </div>
+                 <p className="text-xs text-slate-500 leading-relaxed text-justify line-clamp-4">{item.value}</p>
+              </Card>
+            ))}
+         </div>
+      </div>
+      
       {/* Action Navigation */}
       <div className="flex gap-3 px-2 print:hidden sticky bottom-24 z-50">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button disabled={isExporting} className="flex-1 rounded-[1.5rem] h-14 bg-slate-900 text-white font-bold text-[10px] uppercase tracking-widest gap-2 shadow-xl active:scale-95 transition-all">
-              <Download className="h-5 w-5" /> {isExporting ? 'Processing Elite Report...' : 'Download Report'}
+              <Download className="h-5 w-5" /> {isExporting ? 'Processing Elite Report...' : 'Export Report'}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-64 rounded-2xl p-2 bg-white/95 backdrop-blur-md border-slate-100 shadow-2xl">
             <DropdownMenuItem 
-              onClick={handleDownloadPDF} 
+              onClick={(e) => { e.preventDefault(); handleDownloadPDF(); }} 
               className="flex gap-3 py-4 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors"
             >
               <FileText className="h-4 w-4 text-accent" />
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase">Save Elite PDF</span>
+                <span className="text-[10px] font-bold uppercase">Download Elite PDF</span>
                 <span className="text-[8px] text-slate-400 font-medium">Production-grade documentation</span>
               </div>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={handleCopyText} className="flex gap-3 py-4 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+            <DropdownMenuItem onClick={handleCopyText} className="flex gap-3 py-4 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
               <Copy className="h-4 w-4 text-slate-500" />
               <span className="text-[10px] font-bold uppercase">Copy Summary</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={handleExportJSON} className="flex gap-3 py-4 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+            <DropdownMenuItem onClick={handleExportJSON} className="flex gap-3 py-4 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
               <FileJson className="h-4 w-4 text-slate-500" />
               <span className="text-[10px] font-bold uppercase">Export JSON Data</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button variant="outline" className="h-14 w-14 rounded-[1.5rem] border-white/50 bg-white/50 backdrop-blur-sm flex items-center justify-center shadow-lg active:scale-90 transition-all">
+        <Button onClick={handleShare} variant="outline" className="h-14 w-14 rounded-[1.5rem] border-white/50 bg-white/50 backdrop-blur-sm flex items-center justify-center shadow-lg active:scale-90 transition-all">
           <Share2 className="h-5 w-5 text-slate-700" />
         </Button>
       </div>
