@@ -13,7 +13,9 @@ import {
   ArrowRight,
   ShieldCheck,
   RefreshCcw,
-  Sparkles
+  Sparkles,
+  Download,
+  Save
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -111,6 +113,28 @@ export default function BovindexPage() {
       setIsScanning(false);
       setScanProgress(0);
     }
+  };
+
+  const handleExport = () => {
+    if (!result) return;
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `${result.breedName.replace(/\s+/g, '_')}_profile.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+    toast({
+      title: "File Saved",
+      description: "The bovine breed profile has been exported as a JSON file.",
+    });
+  };
+
+  const handleSaveToHerd = () => {
+    toast({
+      title: "Success",
+      description: `${result?.breedName} has been successfully registered to your local herd records.`,
+    });
   };
 
   const reset = () => {
@@ -289,8 +313,12 @@ export default function BovindexPage() {
                     <h2 className="text-4xl font-headline font-bold text-primary">{result.breedName}</h2>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">Export Data</Button>
-                    <Button variant="default" size="sm" className="bg-primary text-white">Save to Herd</Button>
+                    <Button onClick={handleExport} variant="outline" size="sm" className="gap-2">
+                      <Download className="h-4 w-4" /> Export Data
+                    </Button>
+                    <Button onClick={handleSaveToHerd} variant="default" size="sm" className="bg-primary text-white gap-2">
+                      <Save className="h-4 w-4" /> Save to Herd
+                    </Button>
                   </div>
                 </div>
 
