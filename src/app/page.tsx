@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -120,9 +121,11 @@ export default function BreedClassifierApp() {
     } catch (error: any) {
       const isQuotaError = error.message?.includes('429');
       toast({
-        title: isQuotaError ? "AI Busy" : "Clinical Error",
-        description: isQuotaError ? "System quota reached. Wait 60s." : "Diagnostic unit failed.",
-        variant: "destructive"
+        title: isQuotaError ? "System Busy" : "Scan Error",
+        description: isQuotaError 
+          ? "AI model limit reached. Please wait 60 seconds." 
+          : "An error occurred during scanning. Please try again.",
+        variant: isQuotaError ? "default" : "destructive"
       });
       setIsScanning(false);
       setPhoto(null);
@@ -183,13 +186,13 @@ export default function BreedClassifierApp() {
           <div className="space-y-8 animate-in fade-in">
             <div className="px-2 space-y-4">
               <h1 className="text-3xl font-headline font-bold text-[#0F172A]">
-                Exact <span className="text-accent">Vision</span>
+                Breed <span className="text-accent">Classifier</span>
               </h1>
               
               <Card className="p-5 rounded-[2rem] bg-[#0F172A] text-white border-none shadow-xl flex justify-between items-center">
                 <div className="space-y-1">
                   <p className="text-[8px] font-bold text-white/40 uppercase tracking-widest">System Status</p>
-                  <p className="text-lg font-bold">Clinical Ready</p>
+                  <p className="text-lg font-bold">Ready to Scan</p>
                 </div>
                 <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center">
                   <Activity className="h-5 w-5 text-accent" />
@@ -202,20 +205,20 @@ export default function BreedClassifierApp() {
                 <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center mb-3">
                   <Cpu className="h-5 w-5 text-accent" />
                 </div>
-                <h4 className="font-bold text-[9px] uppercase tracking-wider">Analysis</h4>
+                <h4 className="font-bold text-[9px] uppercase tracking-wider">Vision AI</h4>
               </div>
               <div onClick={() => setActiveTab('ledger')} className="bg-white/70 backdrop-blur-md p-6 rounded-[2.5rem] border border-white shadow-sm flex flex-col items-center text-center cursor-pointer">
                 <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
                   <TrendingUp className="h-5 w-5 text-blue-500" />
                 </div>
-                <h4 className="font-bold text-[9px] uppercase tracking-wider">Vault</h4>
+                <h4 className="font-bold text-[9px] uppercase tracking-wider">Archive</h4>
               </div>
             </div>
 
             {history.length > 0 && (
               <div className="space-y-4 px-2 pb-6">
                  <div className="flex justify-between items-center px-1">
-                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Recent Archive</h3>
+                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Recent Records</h3>
                     <Button variant="link" onClick={() => setActiveTab('ledger')} className="text-accent font-bold text-[9px] uppercase p-0">
                       View All <ArrowRight className="h-3 w-3 ml-1" />
                     </Button>
@@ -239,7 +242,7 @@ export default function BreedClassifierApp() {
       <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-2xl border-t border-slate-100 h-20 px-12 flex items-center justify-between z-50 rounded-t-[2.5rem] print:hidden">
         <Button variant="ghost" onClick={() => { setActiveTab('home'); setPhoto(null); setResult(null); }} className={`flex flex-col gap-1 h-auto p-0 ${activeTab === 'home' ? 'text-accent' : 'text-slate-300'}`}>
           <LayoutDashboard className="h-5 w-5" />
-          <span className="text-[8px] font-bold uppercase">Main</span>
+          <span className="text-[8px] font-bold uppercase">Home</span>
         </Button>
         
         <div className="relative -top-8">
