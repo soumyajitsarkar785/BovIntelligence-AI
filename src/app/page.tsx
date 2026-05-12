@@ -15,7 +15,10 @@ import {
   RefreshCcw,
   Sparkles,
   Download,
-  Save
+  Save,
+  ChevronRight,
+  Database,
+  History as HistoryIcon
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -25,12 +28,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 import { ScanLedger } from '@/components/ScanLedger';
 import { ScanOverlay } from '@/components/ScanOverlay';
 
-import { classifyBovineBreed, ClassifyBovineBreedOutput } from '@/ai/flows/classify-bovine-breed';
-import { profileBovineTraits, ProfileBovineTraitsOutput } from '@/ai/flows/profile-bovine-traits-flow';
-import { generateBovineCareGuide, GenerateBovineCareGuideOutput } from '@/ai/flows/generate-bovine-care-guide';
+import { classifyBovineBreed } from '@/ai/flows/classify-bovine-breed';
+import { profileBovineTraits } from '@/ai/flows/profile-bovine-traits-flow';
+import { generateBovineCareGuide } from '@/ai/flows/generate-bovine-care-guide';
 import { getHistory, saveScan, ScanEntry } from '@/lib/storage';
 
 export default function BovindexPage() {
@@ -53,9 +57,10 @@ export default function BovindexPage() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPhoto(reader.result as string);
+        const dataUri = reader.result as string;
+        setPhoto(dataUri);
         setResult(null);
-        startScan(reader.result as string);
+        startScan(dataUri);
       };
       reader.readAsDataURL(file);
     }
@@ -63,25 +68,26 @@ export default function BovindexPage() {
 
   const startScan = async (dataUri: string) => {
     setIsScanning(true);
-    setScanProgress(10);
+    setScanProgress(5);
     
     try {
-      // Step 1: Classify
-      setScanProgress(30);
+      // Phase 1: AI Vision Analysis
+      setScanProgress(25);
       const classification = await classifyBovineBreed({ photoDataUri: dataUri });
       
       if (!classification.isBovine) {
         toast({
-          title: "Not a Bovine",
-          description: "We couldn't identify a cow or buffalo in this photo.",
+          title: "Analysis Result",
+          description: "This doesn't appear to be a bovine (cow or buffalo). Please try another image.",
           variant: "destructive"
         });
         setIsScanning(false);
+        setPhoto(null);
         return;
       }
 
-      // Step 2: Traits & Care (Parallel)
-      setScanProgress(60);
+      // Phase 2: Deep Data Retrieval (Parallel)
+      setScanProgress(55);
       const [traits, careGuide] = await Promise.all([
         profileBovineTraits({ breedName: classification.breedName }),
         generateBovineCareGuide({ breedName: classification.breedName, lifeStage: 'adult' })
@@ -97,21 +103,30 @@ export default function BovindexPage() {
         careGuide
       };
 
-      setScanProgress(100);
-      setResult(entry);
-      saveScan(entry);
-      setHistory(getHistory());
-      setActiveTab('summary');
+      setScanProgress(90);
+      
+      // Artificial delay for smooth UX
+      setTimeout(() => {
+        setScanProgress(100);
+        setResult(entry);
+        saveScan(entry);
+        setHistory(getHistory());
+        setActiveTab('summary');
+        setIsScanning(false);
+        toast({
+          title: "Scan Complete",
+          description: `Identified as: ${classification.breedName}`,
+        });
+      }, 800);
+
     } catch (error) {
       console.error(error);
       toast({
-        title: "Scan Failed",
-        description: "An error occurred during AI analysis. Please try again.",
+        title: "System Error",
+        description: "AI analysis server is busy. Please try again in a moment.",
         variant: "destructive"
       });
-    } finally {
       setIsScanning(false);
-      setScanProgress(0);
     }
   };
 
@@ -120,116 +135,133 @@ export default function BovindexPage() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `${result.breedName.replace(/\s+/g, '_')}_profile.json`);
+    downloadAnchorNode.setAttribute("download", `bovindex_${result.breedName.toLowerCase().replace(/\s/g, '_')}.json`);
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
     toast({
-      title: "File Saved",
-      description: "The bovine breed profile has been exported as a JSON file.",
+      title: "Export Success",
+      description: "Data exported as JSON successfully.",
+    });
+  };
+
+  const handleConnectHerd = () => {
+    toast({
+      title: "Cloud Sync",
+      description: "Connecting to your central herd database...",
     });
   };
 
   const handleSaveToHerd = () => {
     toast({
-      title: "Success",
-      description: `${result?.breedName} has been successfully registered to your local herd records.`,
+      title: "Record Saved",
+      description: `${result?.breedName} has been added to your local records.`,
     });
   };
 
-  const reset = () => {
+  const resetScanner = () => {
     setPhoto(null);
     setResult(null);
     setScanProgress(0);
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-body">
-      {/* Header */}
-      <header className="border-b bg-white/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
-              <Sparkles className="h-5 w-5" />
+    <div className="min-h-screen bg-[#fcfaf7] text-foreground flex flex-col font-body selection:bg-primary/20">
+      <Toaster />
+      
+      {/* Premium Navigation */}
+      <nav className="border-b bg-white/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="container mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20 rotate-3">
+              <Sparkles className="h-6 w-6" />
             </div>
-            <h1 className="text-2xl font-bold font-headline tracking-tight text-primary">Bovindex</h1>
+            <div>
+              <h1 className="text-2xl font-bold font-headline tracking-tight text-primary leading-none">Bovindex</h1>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Pro Agricultural AI</span>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" className="hidden md:flex gap-2 text-muted-foreground">
-              <LayoutDashboard className="h-4 w-4" />
-              Dashboard
-            </Button>
-            <Button size="sm" className="bg-accent hover:bg-accent/90 text-white shadow-lg shadow-accent/20 px-6">
-              Connect Herd
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1 container mx-auto px-4 py-8 md:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Left Column: Visual Area */}
-          <div className="lg:col-span-5 space-y-6">
-            <div className="relative aspect-[4/5] rounded-3xl overflow-hidden bg-white shadow-2xl border-8 border-white group">
+          <div className="hidden md:flex items-center gap-8">
+            <button className="text-sm font-semibold hover:text-primary transition-colors flex items-center gap-2">
+              <LayoutDashboard className="h-4 w-4" /> Dashboard
+            </button>
+            <button className="text-sm font-semibold hover:text-primary transition-colors flex items-center gap-2">
+              <Database className="h-4 w-4" /> Records
+            </button>
+          </div>
+
+          <Button onClick={handleConnectHerd} size="sm" className="bg-accent hover:bg-accent/90 text-white rounded-full px-6 shadow-md">
+            Connect Cloud
+          </Button>
+        </div>
+      </nav>
+
+      <main className="flex-1 container mx-auto px-6 py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          
+          {/* Left: Imaging Interface */}
+          <div className="lg:col-span-5 space-y-8">
+            <div className="relative aspect-[4/5] rounded-[2.5rem] overflow-hidden bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] border-[12px] border-white group">
               {!photo ? (
                 <div 
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+                  className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center cursor-pointer hover:bg-primary/5 transition-all duration-500"
                 >
-                  <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <Camera className="h-10 w-10 text-primary" />
+                  <div className="h-24 w-24 rounded-full bg-primary/5 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500">
+                    <Camera className="h-12 w-12 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-headline font-bold mb-2">Identify a Breed</h3>
-                  <p className="text-muted-foreground max-w-xs mb-8">
-                    Upload or capture a clear photo of your livestock to get instant AI-powered breed profiles.
+                  <h2 className="text-3xl font-headline font-bold mb-4">Start Identification</h2>
+                  <p className="text-muted-foreground max-w-xs mb-10 leading-relaxed">
+                    Upload a high-resolution photo of your livestock for instant genetic and care profiling.
                   </p>
-                  <div className="flex gap-3">
-                    <Button variant="secondary" className="gap-2">
-                      <Camera className="h-4 w-4" /> Camera
+                  <div className="flex flex-col sm:flex-row gap-4 w-full">
+                    <Button variant="default" className="flex-1 h-12 rounded-xl gap-2 text-md shadow-lg">
+                      <Camera className="h-5 w-5" /> Take Photo
                     </Button>
-                    <Button variant="outline" className="gap-2">
-                      <Upload className="h-4 w-4" /> Gallery
+                    <Button variant="outline" className="flex-1 h-12 rounded-xl gap-2 text-md border-2">
+                      <Upload className="h-5 w-5" /> Browse
                     </Button>
                   </div>
                 </div>
               ) : (
-                <>
+                <div className="h-full w-full relative">
                   <Image
                     src={photo}
-                    alt="Bovine to classify"
+                    alt="Scan target"
                     fill
-                    className="object-cover"
+                    className={`object-cover transition-all duration-700 ${isScanning ? 'brightness-50 grayscale-[0.5]' : ''}`}
                   />
+                  
                   {isScanning && (
-                    <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px] flex flex-col items-center justify-center">
-                      <div className="w-full max-w-[200px] space-y-4">
-                        <div className="h-1 bg-white/30 rounded-full overflow-hidden relative">
-                          <div 
-                            className="h-full bg-accent transition-all duration-300 shadow-[0_0_15px_rgba(189,46,46,0.8)]" 
-                            style={{ width: `${scanProgress}%` }}
-                          />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+                      <div className="w-64 space-y-6">
+                        <div className="flex justify-between text-white text-xs font-bold uppercase tracking-widest mb-2">
+                          <span>Processing</span>
+                          <span>{scanProgress}%</span>
                         </div>
-                        <p className="text-white text-center font-medium animate-pulse text-sm">
-                          Analyzing Traits...
+                        <Progress value={scanProgress} className="h-2 bg-white/20" />
+                        <p className="text-white text-center font-bold animate-pulse text-sm tracking-wide">
+                          Neural Analysis in Progress...
                         </p>
                       </div>
                       <div className="absolute inset-0 scan-line" />
                     </div>
                   )}
+
                   {result && !isScanning && <ScanOverlay />}
                   
-                  {result && !isScanning && (
+                  {photo && !isScanning && (
                     <Button 
-                      onClick={reset}
+                      onClick={resetScanner}
                       variant="secondary" 
                       size="icon" 
-                      className="absolute bottom-4 right-4 rounded-full h-10 w-10 shadow-lg"
+                      className="absolute bottom-6 right-6 rounded-2xl h-12 w-12 shadow-2xl bg-white/90 backdrop-blur hover:bg-white"
                     >
-                      <RefreshCcw className="h-4 w-4" />
+                      <RefreshCcw className="h-5 w-5" />
                     </Button>
                   )}
-                </>
+                </div>
               )}
               <input 
                 type="file" 
@@ -240,200 +272,217 @@ export default function BovindexPage() {
               />
             </div>
 
-            <ScanLedger history={history} onSelect={(entry) => {
-              setPhoto(entry.photoDataUri);
-              setResult(entry);
-              setActiveTab('summary');
-            }} />
+            <div className="bg-white rounded-3xl p-6 shadow-sm border">
+              <ScanLedger history={history} onSelect={(entry) => {
+                setPhoto(entry.photoDataUri);
+                setResult(entry);
+                setActiveTab('summary');
+              }} />
+            </div>
           </div>
 
-          {/* Right Column: Data Area */}
+          {/* Right: Intelligence Output */}
           <div className="lg:col-span-7">
             {!result && !isScanning ? (
-              <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-700">
-                <div className="space-y-4">
-                  <Badge variant="outline" className="border-primary/20 text-primary bg-primary/5 px-3 py-1 text-xs uppercase tracking-wider font-bold">
-                    Agricultural Intelligence
+              <div className="h-full flex flex-col justify-center space-y-10 animate-in fade-in slide-in-from-right-8 duration-1000">
+                <div className="space-y-6">
+                  <Badge className="bg-primary/10 text-primary border-none px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest">
+                    Next-Gen Agri-Tech
                   </Badge>
-                  <h2 className="text-5xl font-headline font-bold leading-tight">
-                    Advanced Livestock <span className="text-primary italic">Analytics</span>
+                  <h2 className="text-6xl font-headline font-bold leading-[1.1] text-slate-900">
+                    The Smartest Way to Manage Your <span className="text-primary italic">Herd</span>
                   </h2>
-                  <p className="text-xl text-muted-foreground leading-relaxed">
-                    Bovindex combines deep learning computer vision with veterinary data to help farmers and researchers identify breeds and optimize herd health.
+                  <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl">
+                    Utilizing Gemini Vision Pro, Bovindex provides instant breed identification, genetic trait estimates, and professional veterinary-grade care guides.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {[
-                    { icon: Zap, title: "Instant Vision", desc: "Recognizes physical traits from 200+ global breeds." },
-                    { icon: Dna, title: "Genetic Profiling", desc: "Estimates milk yield and climatic adaptability." },
-                    { icon: HeartPulse, title: "Care Intelligence", desc: "Custom nutrition guides based on life stages." },
-                    { icon: ShieldCheck, title: "Verification", desc: "Human-verified confidence scores for every scan." },
+                    { icon: Zap, title: "Vision AI", desc: "Recognizes 200+ global cattle and buffalo breeds." },
+                    { icon: Dna, title: "Genetic Insights", desc: "Estimates milk yield and climate resilience markers." },
+                    { icon: HeartPulse, title: "Custom Care", desc: "Tailored nutrition and health management guides." },
+                    { icon: ShieldCheck, title: "Verified Data", desc: "Confidence scores for research-level accuracy." },
                   ].map((item, i) => (
-                    <Card key={i} className="border-none bg-white/40 shadow-sm hover:shadow-md transition-all">
-                      <CardContent className="p-4 flex gap-4">
-                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                          <item.icon className="h-5 w-5 text-primary" />
+                    <div key={i} className="group p-5 bg-white rounded-2xl border border-transparent hover:border-primary/20 hover:shadow-xl transition-all duration-300">
+                      <div className="flex gap-4">
+                        <div className="h-12 w-12 rounded-xl bg-primary/5 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+                          <item.icon className="h-6 w-6" />
                         </div>
                         <div>
-                          <h4 className="font-bold">{item.title}</h4>
-                          <p className="text-xs text-muted-foreground">{item.desc}</p>
+                          <h4 className="font-bold text-lg mb-1">{item.title}</h4>
+                          <p className="text-sm text-muted-foreground leading-snug">{item.desc}</p>
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
             ) : isScanning ? (
-              <div className="space-y-8">
+              <div className="space-y-10 animate-pulse">
                 <div className="space-y-4">
-                  <Skeleton className="h-8 w-32" />
-                  <Skeleton className="h-16 w-full" />
-                  <Skeleton className="h-24 w-full" />
+                  <Skeleton className="h-4 w-40 rounded-full" />
+                  <Skeleton className="h-16 w-3/4 rounded-xl" />
+                  <Skeleton className="h-32 w-full rounded-2xl" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <Skeleton className="h-32 w-full" />
-                  <Skeleton className="h-32 w-full" />
+                <div className="grid grid-cols-2 gap-6">
+                  <Skeleton className="h-40 w-full rounded-2xl" />
+                  <Skeleton className="h-40 w-full rounded-2xl" />
                 </div>
               </div>
             ) : (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-bold text-primary uppercase tracking-widest">Identified Breed</span>
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-black text-primary uppercase tracking-[0.2em]">Verified Identity</span>
                       <Badge className={
-                        result.confidence === 'High' ? 'bg-green-100 text-green-700 hover:bg-green-100 border-green-200' :
-                        result.confidence === 'Medium' ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-yellow-200' :
-                        'bg-red-100 text-red-700 hover:bg-red-100 border-red-200'
+                        result.confidence === 'High' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border-emerald-100' :
+                        result.confidence === 'Medium' ? 'bg-amber-50 text-amber-700 hover:bg-amber-50 border-amber-100' :
+                        'bg-rose-50 text-rose-700 hover:bg-rose-50 border-rose-100'
                       }>
                         {result.confidence} Confidence
                       </Badge>
                     </div>
-                    <h2 className="text-4xl font-headline font-bold text-primary">{result.breedName}</h2>
+                    <h2 className="text-5xl font-headline font-bold text-primary tracking-tight">{result.breedName}</h2>
                   </div>
-                  <div className="flex gap-2">
-                    <Button onClick={handleExport} variant="outline" size="sm" className="gap-2">
-                      <Download className="h-4 w-4" /> Export Data
+                  <div className="flex gap-3">
+                    <Button onClick={handleExport} variant="outline" size="lg" className="rounded-xl border-2 hover:bg-muted font-bold gap-2">
+                      <Download className="h-5 w-5" /> Export
                     </Button>
-                    <Button onClick={handleSaveToHerd} variant="default" size="sm" className="bg-primary text-white gap-2">
-                      <Save className="h-4 w-4" /> Save to Herd
+                    <Button onClick={handleSaveToHerd} size="lg" className="rounded-xl bg-primary shadow-xl shadow-primary/20 font-bold gap-2">
+                      <Save className="h-5 w-5" /> Save Record
                     </Button>
                   </div>
                 </div>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  <TabsList className="bg-white/50 border w-full justify-start overflow-x-auto h-12 p-1">
-                    <TabsTrigger value="summary" className="data-[state=active]:bg-primary data-[state=active]:text-white">Summary</TabsTrigger>
-                    <TabsTrigger value="traits" className="data-[state=active]:bg-primary data-[state=active]:text-white">Trait Profiler</TabsTrigger>
-                    <TabsTrigger value="care" className="data-[state=active]:bg-primary data-[state=active]:text-white">Care Guide</TabsTrigger>
+                  <TabsList className="bg-white p-1.5 rounded-2xl border shadow-sm w-full md:w-auto h-14 mb-8">
+                    <TabsTrigger value="summary" className="rounded-xl px-8 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg">Overview</TabsTrigger>
+                    <TabsTrigger value="traits" className="rounded-xl px-8 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg">Biological Profile</TabsTrigger>
+                    <TabsTrigger value="care" className="rounded-xl px-8 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg">Care & Health</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="summary" className="mt-4 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Card className="bg-white border-none shadow-sm overflow-hidden">
-                        <CardHeader className="bg-muted/30 p-4 border-b">
-                          <CardTitle className="text-sm font-bold flex items-center gap-2">
-                            <Sparkles className="h-4 w-4 text-accent" /> Origin & History
+                  <TabsContent value="summary" className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Card className="rounded-[2rem] border-none bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                        <CardHeader className="bg-primary/5 p-6 border-b border-primary/5">
+                          <CardTitle className="text-md font-bold flex items-center gap-3 text-primary">
+                            <HistoryIcon className="h-5 w-5" /> Historical Context
                           </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-4 text-sm leading-relaxed">
+                        <CardContent className="p-8 text-md leading-relaxed text-muted-foreground">
                           {result.traits.origin}
                         </CardContent>
                       </Card>
-                      <Card className="bg-white border-none shadow-sm overflow-hidden">
-                        <CardHeader className="bg-muted/30 p-4 border-b">
-                          <CardTitle className="text-sm font-bold flex items-center gap-2">
-                            <Zap className="h-4 w-4 text-accent" /> Use & Performance
+                      
+                      <Card className="rounded-[2rem] border-none bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                        <CardHeader className="bg-accent/5 p-6 border-b border-accent/5">
+                          <CardTitle className="text-md font-bold flex items-center gap-3 text-accent">
+                            <Zap className="h-5 w-5" /> Economic Utility
                           </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-4 text-sm leading-relaxed">
-                          <p className="mb-2"><strong>Primary Use:</strong> {result.traits.commonUses}</p>
-                          <p><strong>Yield:</strong> {result.traits.milkYieldEstimates}</p>
+                        <CardContent className="p-8 space-y-4">
+                          <div className="flex justify-between items-center py-2 border-b border-dashed">
+                            <span className="text-muted-foreground font-medium">Primary Use</span>
+                            <span className="font-bold text-slate-800">{result.traits.commonUses}</span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 border-b border-dashed">
+                            <span className="text-muted-foreground font-medium">Expected Yield</span>
+                            <span className="font-bold text-slate-800">{result.traits.milkYieldEstimates}</span>
+                          </div>
                         </CardContent>
                       </Card>
                     </div>
 
-                    <div className="bg-accent/5 border border-accent/20 rounded-2xl p-6 flex flex-col md:flex-row gap-6 items-center">
-                      <div className="h-16 w-16 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-                        <HeartPulse className="h-8 w-8 text-accent" />
+                    <div className="bg-gradient-to-r from-primary to-primary/80 rounded-[2rem] p-8 text-white flex flex-col md:flex-row items-center gap-8 shadow-2xl shadow-primary/20">
+                      <div className="h-20 w-20 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
+                        <HeartPulse className="h-10 w-10" />
                       </div>
                       <div className="flex-1 text-center md:text-left">
-                        <h4 className="font-bold text-accent text-lg mb-1">Health & Temperament</h4>
-                        <p className="text-sm text-muted-foreground">{result.traits.temperament}</p>
+                        <h4 className="text-2xl font-bold mb-2">Health & Temperament</h4>
+                        <p className="text-primary-foreground/90 text-lg line-clamp-2">{result.traits.temperament}</p>
                       </div>
-                      <Button onClick={() => setActiveTab('care')} variant="link" className="text-accent font-bold group">
-                        Full Care Guide <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      <Button onClick={() => setActiveTab('care')} variant="secondary" className="bg-white text-primary hover:bg-white/90 rounded-xl px-8 h-12 font-bold shadow-lg">
+                        View Full Care Plan
                       </Button>
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="traits" className="mt-4">
-                    <Card className="border-none shadow-none bg-transparent">
-                      <CardContent className="p-0 space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-4">
-                            <h4 className="font-bold border-b pb-2 flex items-center gap-2 text-primary">
-                              <Dna className="h-4 w-4" /> Biological Markers
-                            </h4>
-                            <div className="space-y-3">
-                              <div className="flex justify-between items-center text-sm border-b border-dashed pb-2">
-                                <span className="text-muted-foreground">Physical Conformation</span>
-                                <span className="font-medium">{result.traits.physicalCharacteristics.split(',')[0]}</span>
-                              </div>
-                              <div className="flex justify-between items-center text-sm border-b border-dashed pb-2">
-                                <span className="text-muted-foreground">Adaptability Index</span>
-                                <Badge variant="secondary" className="bg-primary/10 text-primary">High Efficiency</Badge>
-                              </div>
+                  <TabsContent value="traits" className="space-y-8">
+                    <div className="bg-white rounded-[2rem] p-8 shadow-sm border space-y-10">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div className="space-y-6">
+                          <h4 className="text-xl font-bold flex items-center gap-3 text-primary pb-4 border-b">
+                            <Dna className="h-6 w-6" /> Physical Markers
+                          </h4>
+                          <div className="space-y-5">
+                            <div className="p-5 bg-muted/30 rounded-2xl">
+                              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Breed Characteristics</span>
+                              <p className="font-semibold text-lg">{result.traits.physicalCharacteristics}</p>
                             </div>
-                            <div className="p-4 bg-white rounded-xl text-sm italic border-l-4 border-primary shadow-sm">
-                              "{result.traits.specialNotes}"
-                            </div>
-                          </div>
-                          
-                          <div className="space-y-4">
-                            <h4 className="font-bold border-b pb-2 flex items-center gap-2 text-primary">
-                              <RefreshCcw className="h-4 w-4" /> Environmental Tolerance
-                            </h4>
-                            <p className="text-sm leading-relaxed text-muted-foreground">
-                              {result.traits.environmentalAdaptability}
-                            </p>
-                            <div className="flex gap-2">
-                              {result.traits.environmentalAdaptability.toLowerCase().includes('heat') && <Badge className="bg-orange-100 text-orange-700">Heat Tolerant</Badge>}
-                              {result.traits.environmentalAdaptability.toLowerCase().includes('cold') && <Badge className="bg-blue-100 text-blue-700">Cold Hardy</Badge>}
-                              <Badge className="bg-green-100 text-green-700">Resilient</Badge>
+                            <div className="p-5 bg-emerald-50 rounded-2xl border border-emerald-100">
+                              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 block mb-2">Efficiency Rating</span>
+                              <p className="font-bold text-emerald-900 text-lg">Optimized for Productivity</p>
                             </div>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
+                        
+                        <div className="space-y-6">
+                          <h4 className="text-xl font-bold flex items-center gap-3 text-primary pb-4 border-b">
+                            <Sparkles className="h-6 w-6" /> Adaptability Profile
+                          </h4>
+                          <p className="text-lg leading-relaxed text-muted-foreground">
+                            {result.traits.environmentalAdaptability}
+                          </p>
+                          <div className="flex flex-wrap gap-3">
+                            {result.traits.environmentalAdaptability.toLowerCase().includes('heat') && <Badge className="bg-orange-100 text-orange-700 py-2 px-4 rounded-xl border-none font-bold">Heat Resistant</Badge>}
+                            {result.traits.environmentalAdaptability.toLowerCase().includes('cold') && <Badge className="bg-blue-100 text-blue-700 py-2 px-4 rounded-xl border-none font-bold">Cold Tolerant</Badge>}
+                            <Badge className="bg-primary/10 text-primary py-2 px-4 rounded-xl border-none font-bold">Climate Ready</Badge>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-8 bg-primary/5 rounded-[2rem] border-l-[8px] border-primary italic text-xl text-primary/80">
+                        "{result.traits.specialNotes}"
+                      </div>
+                    </div>
                   </TabsContent>
 
-                  <TabsContent value="care" className="mt-4">
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Card className="bg-white border-none shadow-sm overflow-hidden border-t-4 border-t-primary">
-                          <CardHeader className="p-4 pb-0">
-                            <CardTitle className="text-lg font-headline font-bold">Nutrition Plan</CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-4 pt-2 prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap">
-                            {result.careGuide.nutritionTips}
-                          </CardContent>
-                        </Card>
-                        <Card className="bg-white border-none shadow-sm overflow-hidden border-t-4 border-t-accent">
-                          <CardHeader className="p-4 pb-0">
-                            <CardTitle className="text-lg font-headline font-bold">Management Schedule</CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-4 pt-2 prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap">
-                            {result.careGuide.healthTips}
-                          </CardContent>
-                        </Card>
-                      </div>
+                  <TabsContent value="care" className="space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <Card className="rounded-[2.5rem] border-none bg-white shadow-xl overflow-hidden border-t-8 border-t-primary">
+                        <CardHeader className="p-8 pb-4">
+                          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                            <Zap className="h-7 w-7 text-primary" />
+                          </div>
+                          <CardTitle className="text-2xl font-headline font-bold">Nutrition Management</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-8 pt-0 prose prose-slate max-w-none text-muted-foreground text-lg leading-relaxed whitespace-pre-wrap">
+                          {result.careGuide.nutritionTips}
+                        </CardContent>
+                      </Card>
                       
-                      <div className="flex items-center gap-3 p-4 bg-muted/40 rounded-xl border border-dashed text-xs text-muted-foreground">
-                        <Info className="h-5 w-5 text-primary shrink-0" />
-                        <p>This guide is AI-generated based on specific breed characteristics. Always consult with a local veterinarian for site-specific health protocols and vaccine schedules.</p>
+                      <Card className="rounded-[2.5rem] border-none bg-white shadow-xl overflow-hidden border-t-8 border-t-accent">
+                        <CardHeader className="p-8 pb-4">
+                          <div className="h-14 w-14 rounded-2xl bg-accent/10 flex items-center justify-center mb-4">
+                            <HeartPulse className="h-7 w-7 text-accent" />
+                          </div>
+                          <CardTitle className="text-2xl font-headline font-bold">Health Protocol</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-8 pt-0 prose prose-slate max-w-none text-muted-foreground text-lg leading-relaxed whitespace-pre-wrap">
+                          {result.careGuide.healthTips}
+                        </CardContent>
+                      </Card>
+                    </div>
+                    
+                    <div className="flex items-center gap-5 p-8 bg-amber-50 rounded-[2rem] border border-amber-200 shadow-sm">
+                      <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                        <Info className="h-6 w-6 text-amber-700" />
                       </div>
+                      <p className="text-amber-900 font-medium">
+                        <strong>Disclaimer:</strong> This care guide is AI-generated based on breed profiles. Please consult your local veterinarian for custom vaccination schedules and site-specific health advice.
+                      </p>
                     </div>
                   </TabsContent>
                 </Tabs>
@@ -443,16 +492,26 @@ export default function BovindexPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="mt-auto border-t py-8 bg-muted/30">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-sm text-muted-foreground mb-4">
-            &copy; {new Date().getFullYear()} Bovindex Agricultural Systems. All rights reserved.
-          </p>
-          <div className="flex justify-center gap-6 text-xs font-bold uppercase tracking-widest text-primary/60">
-            <a href="#" className="hover:text-primary transition-colors">Safety Protocols</a>
-            <a href="#" className="hover:text-primary transition-colors">Privacy</a>
-            <a href="#" className="hover:text-primary transition-colors">Terms</a>
+      {/* Modern Footer */}
+      <footer className="mt-20 border-t py-16 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-10">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center text-white">
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <span className="text-xl font-headline font-bold text-primary">Bovindex</span>
+            </div>
+            
+            <p className="text-sm text-muted-foreground font-medium">
+              &copy; {new Date().getFullYear()} Bovindex Agri-Intelligence Systems. All rights reserved.
+            </p>
+            
+            <div className="flex gap-8">
+              <a href="#" className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">Safety</a>
+              <a href="#" className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">Privacy</a>
+              <a href="#" className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">Contact</a>
+            </div>
           </div>
         </div>
       </footer>

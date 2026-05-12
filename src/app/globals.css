@@ -24,7 +24,7 @@
     --border: 31 20% 85%;
     --input: 31 20% 85%;
     --ring: 31 60% 30%;
-    --radius: 0.75rem;
+    --radius: 1rem;
   }
 }
 
@@ -34,6 +34,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline;
@@ -47,5 +48,24 @@
 
 .scan-line {
   animation: scan 3s linear infinite;
-  background: linear-gradient(to bottom, transparent, hsl(var(--accent) / 0.5), transparent);
+  background: linear-gradient(to bottom, transparent, hsl(var(--accent) / 0.8), transparent);
+  height: 4px;
+  width: 100%;
+  position: absolute;
+  z-index: 30;
+  box-shadow: 0 0 20px 2px hsl(var(--accent) / 0.5);
+}
+
+.prose {
+  line-height: 1.8;
+}
+
+/* Glassmorphism utility */
+.glass {
+  @apply bg-white/40 backdrop-blur-xl border border-white/20;
+}
+
+/* Smooth transitions */
+.transition-all {
+  transition-duration: 300ms;
 }
