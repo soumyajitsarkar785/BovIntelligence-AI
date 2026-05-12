@@ -12,7 +12,6 @@ import {
   Share2,
   FileCheck,
   Microscope,
-  Stethoscope,
   ChevronRight
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -29,12 +28,16 @@ export function AnalysisView({ result }: AnalysisViewProps) {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `BovIntel_Diagnostic_${result.id}.json`);
+    downloadAnchorNode.setAttribute("download", `Breed_Report_${result.id}.json`);
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
-    toast({ title: "Data Exported", description: "Clinical report saved." });
+    toast({ title: "Data Exported", description: "Professional report saved." });
   };
+
+  // Safe data access with fallbacks
+  const markers = result.visualMarkers || [];
+  const analysis = result.physiologicalAnalysis || { cranial: 'N/A', thoracic: 'N/A', body: 'N/A' };
 
   return (
     <div className="space-y-6 pb-20 animate-in fade-in duration-500 px-2">
@@ -42,7 +45,7 @@ export function AnalysisView({ result }: AnalysisViewProps) {
         <Image src={result.photoDataUri} alt={result.breedName} fill className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent flex flex-col justify-end p-6">
           <Badge className="w-fit bg-accent text-white border-none px-3 py-1 rounded-full text-[8px] font-bold uppercase tracking-widest mb-2">
-            Precision: {result.confidence}
+            Precision: {result.confidence || 'N/A'}
           </Badge>
           <h2 className="text-2xl font-headline font-bold text-white leading-tight">{result.breedName}</h2>
           <div className="flex items-center gap-2 text-white/50 text-[9px] font-bold uppercase mt-1">
@@ -80,26 +83,28 @@ export function AnalysisView({ result }: AnalysisViewProps) {
               <span className="text-[9px] font-bold uppercase">Expert Diagnostic Note</span>
             </div>
             <p className="text-sm font-medium text-slate-700 leading-relaxed italic">
-              "{result.diagnosticNote}"
+              "{result.diagnosticNote || "No diagnostic details available for this record."}"
             </p>
           </Card>
 
           <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white space-y-4">
              <div className="flex items-center justify-between">
                 <span className="text-[9px] font-bold uppercase text-slate-400">Markers Detected</span>
-                <Badge variant="outline" className="text-[8px]">{result.visualMarkers.length} Points</Badge>
+                <Badge variant="outline" className="text-[8px]">{markers.length} Points</Badge>
              </div>
              <div className="flex flex-wrap gap-2">
-                {result.visualMarkers.map((marker, i) => (
+                {markers.length > 0 ? markers.map((marker, i) => (
                   <Badge key={i} className="bg-blue-50 text-blue-600 border-none text-[8px] px-2 py-0.5">
                     {marker}
                   </Badge>
-                ))}
+                )) : (
+                  <span className="text-[10px] text-slate-400">No markers identified.</span>
+                )}
              </div>
              <div className="h-px bg-slate-50" />
              <div className="space-y-1">
                 <span className="text-[9px] font-bold uppercase text-accent">Negative Constraints Check</span>
-                <p className="text-[10px] text-slate-500">{result.negativeConstraints}</p>
+                <p className="text-[10px] text-slate-500">{result.negativeConstraints || "N/A"}</p>
              </div>
           </Card>
         </TabsContent>
@@ -107,9 +112,9 @@ export function AnalysisView({ result }: AnalysisViewProps) {
         <TabsContent value="morphology" className="space-y-4">
           <div className="grid gap-3">
              {[
-               { title: 'Cranial', data: result.physiologicalAnalysis.cranial },
-               { title: 'Thoracic', data: result.physiologicalAnalysis.thoracic },
-               { title: 'Body Frame', data: result.physiologicalAnalysis.body }
+               { title: 'Cranial', data: analysis.cranial },
+               { title: 'Thoracic', data: analysis.thoracic },
+               { title: 'Body Frame', data: analysis.body }
              ].map((item, idx) => (
                <Card key={idx} className="rounded-[1.5rem] p-4 border-none shadow-sm bg-white flex gap-4">
                   <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
@@ -117,7 +122,7 @@ export function AnalysisView({ result }: AnalysisViewProps) {
                   </div>
                   <div className="space-y-1">
                     <h4 className="text-[9px] font-bold uppercase text-slate-800">{item.title}</h4>
-                    <p className="text-[11px] text-slate-500 leading-tight">{item.data}</p>
+                    <p className="text-[11px] text-slate-500 leading-tight">{item.data || 'N/A'}</p>
                   </div>
                </Card>
              ))}
@@ -131,7 +136,7 @@ export function AnalysisView({ result }: AnalysisViewProps) {
              </div>
              <div className="space-y-1">
                <h3 className="text-xs font-bold text-[#0F172A] uppercase">Nutrition Management</h3>
-               <p className="text-[11px] text-slate-500 leading-relaxed">{result.careGuide.nutritionTips}</p>
+               <p className="text-[11px] text-slate-500 leading-relaxed">{result.careGuide?.nutritionTips || 'N/A'}</p>
              </div>
           </Card>
 
@@ -141,7 +146,7 @@ export function AnalysisView({ result }: AnalysisViewProps) {
              </div>
              <div className="space-y-1">
                <h3 className="text-xs font-bold text-[#0F172A] uppercase">Clinical Health Care</h3>
-               <p className="text-[11px] text-slate-500 leading-relaxed">{result.careGuide.healthTips}</p>
+               <p className="text-[11px] text-slate-500 leading-relaxed">{result.careGuide?.healthTips || 'N/A'}</p>
              </div>
           </Card>
         </TabsContent>

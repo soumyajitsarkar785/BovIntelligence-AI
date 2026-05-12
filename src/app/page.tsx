@@ -11,7 +11,7 @@ import {
   Cpu,
   ArrowRight,
   TrendingUp,
-  Fingerprint
+  Search
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -29,11 +29,11 @@ import { getHistory, saveScan, ScanEntry, deleteScan } from '@/lib/storage';
 const AppLogo = () => (
   <div className="flex items-center gap-2">
     <div className="h-8 w-8 bg-accent rounded-xl flex items-center justify-center shadow-lg shadow-accent/20">
-      <Fingerprint className="h-5 w-5 text-white" />
+      <Search className="h-5 w-5 text-white" />
     </div>
     <div className="flex flex-col">
-      <span className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none mb-0.5">BovIntelligence</span>
-      <span className="font-headline font-bold text-lg text-[#0F172A] leading-none">AI</span>
+      <span className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none mb-0.5">Breed</span>
+      <span className="font-headline font-bold text-lg text-[#0F172A] leading-none">Classifier</span>
     </div>
   </div>
 );
@@ -93,7 +93,7 @@ export default function BreedClassifierApp() {
       setLoadingStep('Genomic Profiling...');
 
       const entry: ScanEntry = {
-        id: `BI-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+        id: `BC-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
         timestamp: Date.now(),
         photoDataUri: dataUri,
         breedName: analysis.primary_breed,
@@ -101,7 +101,7 @@ export default function BreedClassifierApp() {
         speciesType: analysis.species_type,
         detectedStatus: analysis.detected_status,
         physiologicalAnalysis: analysis.physiological_analysis,
-        visualMarkers: analysis.visual_evidence_markers,
+        visualMarkers: analysis.visual_evidence_markers || [],
         negativeConstraints: analysis.negative_constraints_check,
         diagnosticNote: analysis.diagnostic_note,
         traits: analysis.traits,
@@ -173,7 +173,7 @@ export default function BreedClassifierApp() {
         ) : activeTab === 'ledger' ? (
           <div className="space-y-6 animate-in slide-in-from-bottom-5">
             <div className="px-2">
-              <h2 className="text-2xl font-headline font-bold">Clinical Archives</h2>
+              <h2 className="text-2xl font-headline font-bold">Archives</h2>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{history.length} Verified Records</p>
             </div>
             <ScanLedger history={history} onSelect={(e) => {setPhoto(e.photoDataUri); setResult(e);}} onDelete={handleDeleteEntry} />
@@ -182,13 +182,13 @@ export default function BreedClassifierApp() {
           <div className="space-y-8 animate-in fade-in">
             <div className="px-2 space-y-4">
               <h1 className="text-3xl font-headline font-bold text-[#0F172A]">
-                Genomic <span className="text-accent">Diagnostics</span>
+                Exact <span className="text-accent">Vision</span>
               </h1>
               
               <Card className="p-5 rounded-[2rem] bg-[#0F172A] text-white border-none shadow-2xl flex justify-between items-center">
                 <div className="space-y-1">
-                  <p className="text-[8px] font-bold text-white/40 uppercase tracking-widest">Precision Analysis</p>
-                  <p className="text-lg font-bold">Expert Active</p>
+                  <p className="text-[8px] font-bold text-white/40 uppercase tracking-widest">Master Diagnostic</p>
+                  <p className="text-lg font-bold">Ready to Scan</p>
                 </div>
                 <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center">
                   <Activity className="h-5 w-5 text-accent" />
@@ -207,14 +207,14 @@ export default function BreedClassifierApp() {
                 <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center mb-2">
                   <TrendingUp className="h-5 w-5 text-blue-500" />
                 </div>
-                <h4 className="font-bold text-[9px] uppercase">Archives</h4>
+                <h4 className="font-bold text-[9px] uppercase">Records</h4>
               </div>
             </div>
 
             {history.length > 0 && (
               <div className="space-y-4 px-2 pb-6">
                  <div className="flex justify-between items-center px-1">
-                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Recent Findings</h3>
+                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Recent Activity</h3>
                     <Button variant="link" onClick={() => setActiveTab('ledger')} className="text-accent font-bold text-[9px] uppercase p-0">
                       Vault <ArrowRight className="h-3 w-3 ml-1" />
                     </Button>
