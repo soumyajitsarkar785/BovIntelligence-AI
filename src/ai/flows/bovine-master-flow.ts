@@ -1,8 +1,8 @@
 'use server';
 /**
- * @fileOverview BovIntelligence AI Master Flow.
- * Implements Elite Senior Livestock Geneticist protocols for precision diagnostics.
- * Now generating extremely verbose and professional reports for PDF production.
+ * @fileOverview BovIntelligence AI Elite Master Flow.
+ * Implements Senior Livestock Geneticist protocols for high-precision, academic-level diagnostics.
+ * Generates extremely verbose and professional reports for production-grade documentation.
  */
 
 import {ai} from '@/ai/genkit';
@@ -19,15 +19,15 @@ const BovineMasterOutputSchema = z.object({
   detected_status: z.string().describe("SUCCESS or ERROR status."),
   species_type: z.string().describe("Cattle (bovine) or Buffalo (bubaline)."),
   primary_breed: z.string().describe("Identified breed name."),
-  confidence_score: z.string().describe("90-100%, 70-89%, etc."),
+  confidence_score: z.string().describe("Precision score (e.g., 98.5%)."),
   physiological_analysis: z.object({
-    cranial: z.string().describe("Technical analysis of ears, horns, and forehead profile (3-4 detailed sentences)."),
-    thoracic: z.string().describe("Technical analysis of hump, dewlap, and neck musculature (3-4 detailed sentences)."),
-    body: z.string().describe("Technical analysis of topline, coat, tail, and limb conformation (3-4 detailed sentences).")
+    cranial: z.string().describe("Academic analysis of ears, horns, and forehead profile (5-7 detailed sentences)."),
+    thoracic: z.string().describe("Technical analysis of hump, dewlap, and neck musculature (5-7 detailed sentences)."),
+    body: z.string().describe("Technical analysis of topline, coat, tail, and limb conformation (5-7 detailed sentences).")
   }),
   visual_evidence_markers: z.array(z.string()).describe("List of specific phenotypic markers identified."),
   negative_constraints_check: z.string().describe("Expert reasoning on why it does NOT match similar breeds."),
-  diagnostic_note: z.string().describe("Concise clinical summary for the diagnostic report."),
+  diagnostic_note: z.string().describe("Clinical summary for the diagnostic report header."),
   traits: z.object({
     origin: z.string().describe("Extremely detailed history and geographical origin. MUST be at least 15-20 full, academic-style sentences detailing historical context and evolutionary lineage."),
     milkYieldEstimates: z.string().describe("Comprehensive analysis of production metrics, quality, fat content, and lactation cycles. MUST be at least 15-20 professional sentences with scientific depth."),
@@ -52,25 +52,25 @@ const bovineMasterPrompt = ai.definePrompt({
   name: 'bovineMasterPrompt',
   input: {schema: BovineMasterInputSchema},
   output: {schema: BovineMasterOutputSchema},
-  prompt: `ROLE: You are an elite Senior Livestock Geneticist and Veterinary Vision Analyst with 30+ years of experience in global bovine diagnostics.
+  prompt: `ROLE: You are an elite Senior Livestock Geneticist and Veterinary Vision Analyst with 40+ years of experience in global bovine diagnostics.
 
 STRICT INSTRUCTIONS:
 1. Provide EXTREMELY VERBOSE, ACADEMIC, and PROFESSIONAL paragraphs for every field.
-2. For all 'traits' sub-fields, write at least 15-20 full, complex sentences. NO BULLET POINTS.
+2. For all 'traits' sub-fields, write at least 15-20 full, complex sentences. NO BULLET POINTS. Use professional, clinical language.
 3. For all 'careGuide' sub-fields, write at least 20-25 full, professional sentences in a clinical tone.
-4. Use veterinary and genetic terminology (e.g., phenotype, genotype, ethology, phenotypic markers, conformation, somatic traits, thermoregulation).
+4. Use veterinary and genetic terminology (e.g., phenotype, genotype, ethology, phenotypic markers, conformation, somatic traits, thermoregulation, phylogenetic lineage).
 5. If the image is not a cattle or buffalo, set detected_status to "ERROR" and species_type to "INVALID".
 
-REPORT STRUCTURE:
-* Confirm species (Cattle/Buffalo).
-* Identify primary breed with high precision.
-* Perform cranial, thoracic, and body analysis with extreme detail.
-* Elaborate on geographical evolution and genetic heritage.
-* Provide a comprehensive clinical management protocol.
+REPORT STRATEGY:
+- Confirm species precisely (Cattle/Buffalo).
+- Identify breed with maximum genomic precision.
+- Elaborate on geographical evolution and genetic heritage with deep historical context.
+- Provide a comprehensive clinical management protocol that reads like a professional veterinary textbook.
 
-The goal is to produce a detailed multi-page professional PDF report similar to a high-end research laboratory diagnostic output.
+The goal is to produce a detailed multi-page professional PDF report for a high-end research laboratory.
 
-Photo: {{media url=photoDataUri}}`,
+Photo: {{media url=photoDataUri}}
+Context: {{{description}}}`,
 });
 
 const bovineMasterFlow = ai.defineFlow(
