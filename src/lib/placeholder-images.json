@@ -1,3 +1,22 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-cow",
+      "description": "A majestic Brahman cow in a pasture",
+      "imageUrl": "https://picsum.photos/seed/bovine1/1200/800",
+      "imageHint": "brahman cow pasture"
+    },
+    {
+      "id": "jersey-cow",
+      "description": "Jersey cow profile",
+      "imageUrl": "https://picsum.photos/seed/bovine2/800/600",
+      "imageHint": "jersey cow"
+    },
+    {
+      "id": "buffalo",
+      "description": "Murrah buffalo in water",
+      "imageUrl": "https://picsum.photos/seed/bovine3/800/600",
+      "imageHint": "murrah buffalo"
+    }
+  ]
 }
