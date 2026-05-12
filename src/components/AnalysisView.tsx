@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ScanEntry } from '@/lib/storage';
@@ -57,7 +58,8 @@ Note: ${result.diagnosticNote}
     toast({ title: "Copied", description: "Report text copied." });
   };
 
-  const handlePrint = () => {
+  const handlePrint = (e: React.MouseEvent) => {
+    e.preventDefault();
     if (typeof window !== 'undefined') {
       window.print();
     }
@@ -100,15 +102,15 @@ Note: ${result.diagnosticNote}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 bg-white/95 backdrop-blur-md border-slate-100 shadow-2xl">
-            <DropdownMenuItem onSelect={handlePrint} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
+            <DropdownMenuItem onClick={handlePrint} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
               <Printer className="h-4 w-4 text-slate-500" />
               <span className="text-[10px] font-bold uppercase">Print / Save PDF</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={handleCopyText} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
+            <DropdownMenuItem onClick={handleCopyText} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
               <Copy className="h-4 w-4 text-slate-500" />
               <span className="text-[10px] font-bold uppercase">Copy Text</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={handleExportJSON} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
+            <DropdownMenuItem onClick={handleExportJSON} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
               <FileJson className="h-4 w-4 text-slate-500" />
               <span className="text-[10px] font-bold uppercase">JSON Data</span>
             </DropdownMenuItem>
@@ -122,34 +124,30 @@ Note: ${result.diagnosticNote}
 
       {/* Analysis Content */}
       <div className="space-y-6">
-        {/* Diagnostic Section */}
-        <div className="space-y-4">
-          <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white print:border print:shadow-none analysis-card">
-            <div className="flex items-center gap-2 text-slate-400 mb-3">
-              <Microscope className="h-4 w-4 text-accent" />
-              <span className="text-[9px] font-bold uppercase">Clinical Note</span>
-            </div>
-            <p className="text-sm font-medium text-slate-700 leading-relaxed italic">
-              "{result.diagnosticNote || "Processing diagnostic data..."}"
-            </p>
-          </Card>
+        <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white print:border print:shadow-none analysis-card">
+          <div className="flex items-center gap-2 text-slate-400 mb-3">
+            <Microscope className="h-4 w-4 text-accent" />
+            <span className="text-[9px] font-bold uppercase">Clinical Note</span>
+          </div>
+          <p className="text-sm font-medium text-slate-700 leading-relaxed italic">
+            "{result.diagnosticNote || "Processing diagnostic data..."}"
+          </p>
+        </Card>
 
-          <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white space-y-4 print:border print:shadow-none analysis-card">
-             <div className="flex items-center justify-between">
-                <span className="text-[9px] font-bold uppercase text-slate-400">Markers Detected</span>
-                <Badge variant="outline" className="text-[8px]">{markers?.length || 0} Points</Badge>
-             </div>
-             <div className="flex flex-wrap gap-2">
-                {markers?.map((marker, i) => (
-                  <Badge key={i} className="bg-blue-50 text-blue-600 border-none text-[8px] px-2 py-0.5">
-                    {marker}
-                  </Badge>
-                ))}
-             </div>
-          </Card>
-        </div>
+        <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white space-y-4 print:border print:shadow-none analysis-card">
+           <div className="flex items-center justify-between">
+              <span className="text-[9px] font-bold uppercase text-slate-400">Markers Detected</span>
+              <Badge variant="outline" className="text-[8px]">{markers?.length || 0} Points</Badge>
+           </div>
+           <div className="flex flex-wrap gap-2">
+              {markers?.map((marker, i) => (
+                <Badge key={i} className="bg-blue-50 text-blue-600 border-none text-[8px] px-2 py-0.5">
+                  {marker}
+                </Badge>
+              ))}
+           </div>
+        </Card>
 
-        {/* Morphology Section */}
         <div className="grid gap-3 pt-4 border-t print:border-none">
            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-2">Morphological Analysis</h3>
            {[
@@ -167,7 +165,6 @@ Note: ${result.diagnosticNote}
            ))}
         </div>
 
-        {/* Protocol Section */}
         <div className="space-y-4 pt-4 border-t print:border-none">
           <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-2">Care Protocol</h3>
           <Card className="rounded-[2rem] p-5 bg-white shadow-sm border-none flex gap-4 items-start print:border analysis-card">

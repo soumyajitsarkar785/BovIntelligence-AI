@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -25,7 +26,7 @@ import { AnalysisView } from '@/components/AnalysisView';
 import { ScanOverlay } from '@/components/ScanOverlay';
 
 import { analyzeBovine } from '@/ai/flows/bovine-master-flow';
-import { saveScan, ScanEntry, deleteScan, subscribeToHistory } from '@/lib/storage';
+import { saveScan, ScanEntry, deleteScan, subscribeToHistory, findCachedScan } from '@/lib/storage';
 
 const AppLogo = () => (
   <div className="flex items-center gap-2">
@@ -76,6 +77,21 @@ export default function BreedClassifierApp() {
     setIsScanning(true);
     setScanProgress(0);
     
+    // SMART CACHE (Learning Mechanism)
+    // Check if this image was scanned before to save API Quota
+    const cachedResult = findCachedScan(dataUri);
+    if (cachedResult) {
+      setLoadingStep('Retrieving learned data...');
+      setScanProgress(50);
+      setTimeout(() => {
+        setScanProgress(100);
+        setResult(cachedResult);
+        setIsScanning(false);
+        toast({ title: "Instant Match", description: "Result retrieved from BovIntelligence memory." });
+      }, 1000);
+      return;
+    }
+
     try {
       setLoadingStep('Morphological Validation...');
       setScanProgress(20);
@@ -114,18 +130,19 @@ export default function BreedClassifierApp() {
       setTimeout(() => {
         setScanProgress(100);
         saveScan(entry);
+        setResult({ ...entry, timestamp: Date.now() });
         setIsScanning(false);
-        toast({ title: "Analysis Complete", description: "Record secured in elite vault." });
+        toast({ title: "Analysis Complete", description: "Record secured in BovIntelligence memory." });
       }, 800);
 
     } catch (error: any) {
       const isQuotaError = error.message?.includes('429') || error.status === 429 || error.message?.includes('quota');
       
       toast({
-        title: isQuotaError ? "System Busy" : "Diagnostic Error",
+        title: isQuotaError ? "AI Limit Reached" : "Diagnostic Error",
         description: isQuotaError 
-          ? "AI model limit reached. Please wait 60 seconds." 
-          : "An error occurred during morphological analysis.",
+          ? "System quota busy. Please wait 60s or try a previously scanned image." 
+          : "An error occurred during analysis.",
         variant: isQuotaError ? "default" : "destructive"
       });
       setIsScanning(false);
@@ -139,7 +156,7 @@ export default function BreedClassifierApp() {
       setResult(null);
       setPhoto(null);
     }
-    toast({ title: "Record Purged", description: "Data removed from vault." });
+    toast({ title: "Record Purged", description: "Data removed from memory." });
   };
 
   return (
@@ -215,7 +232,7 @@ export default function BreedClassifierApp() {
                 <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
                   <TrendingUp className="h-5 w-5 text-blue-500" />
                 </div>
-                <h4 className="font-bold text-[9px] uppercase tracking-wider">Genomic Ledger</h4>
+                <h4 className="font-bold text-[9px] uppercase tracking-wider">Memory Bank</h4>
               </div>
             </div>
 
@@ -224,7 +241,7 @@ export default function BreedClassifierApp() {
                  <div className="flex justify-between items-center px-1">
                     <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Recent Analysis</h3>
                     <Button variant="link" onClick={() => setActiveTab('ledger')} className="text-accent font-bold text-[9px] uppercase p-0">
-                      View Vault <ArrowRight className="h-3 w-3 ml-1" />
+                      View Bank <ArrowRight className="h-3 w-3 ml-1" />
                     </Button>
                  </div>
                  <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
@@ -257,7 +274,7 @@ export default function BreedClassifierApp() {
 
         <Button variant="ghost" onClick={() => setActiveTab('ledger')} className={`flex flex-col gap-1 h-auto p-0 ${activeTab === 'ledger' ? 'text-accent' : 'text-slate-300'}`}>
           <HistoryIcon className="h-5 w-5" />
-          <span className="text-[8px] font-bold uppercase">Vault</span>
+          <span className="text-[8px] font-bold uppercase">Bank</span>
         </Button>
       </nav>
 

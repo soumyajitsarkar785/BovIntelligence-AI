@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -29,7 +30,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Removed experimental.allowedDevOrigins as it was causing unrecognized key errors in this version
 };
 
 export default nextConfig;

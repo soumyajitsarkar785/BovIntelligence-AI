@@ -3,7 +3,7 @@
 
 /**
  * @fileOverview Local Database Ledger for BovIntelligence AI.
- * Uses persistent local storage for stable data management without cloud dependencies.
+ * Implements Smart Caching (Learning) to avoid redundant API calls.
  */
 
 export interface ScanEntry {
@@ -41,7 +41,7 @@ const STORAGE_KEY = 'bovintelligence_vault_v1';
 /**
  * Returns the current scan history from local storage.
  */
-function getHistory(): ScanEntry[] {
+export function getHistory(): ScanEntry[] {
   if (typeof window === 'undefined') return [];
   try {
     const data = localStorage.getItem(STORAGE_KEY);
@@ -50,6 +50,15 @@ function getHistory(): ScanEntry[] {
     console.error("Vault Access Error:", e);
     return [];
   }
+}
+
+/**
+ * Smart Lookup: Finds if an image has been scanned before (Learning Mechanism).
+ */
+export function findCachedScan(photoDataUri: string): ScanEntry | null {
+  const history = getHistory();
+  // We compare a slice of the data URI for performance and exact matching
+  return history.find(entry => entry.photoDataUri === photoDataUri) || null;
 }
 
 /**
@@ -67,7 +76,6 @@ export function saveScan(entry: Omit<ScanEntry, 'timestamp'>) {
   const updatedHistory = [newEntry, ...history];
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedHistory));
   
-  // Broadcast update for multi-component syncing
   window.dispatchEvent(new CustomEvent('vault-update', { detail: updatedHistory }));
 }
 
@@ -84,7 +92,6 @@ export function subscribeToHistory(callback: (history: ScanEntry[]) => void) {
   window.addEventListener('vault-update', handleUpdate);
   window.addEventListener('storage', () => callback(getHistory()));
   
-  // Immediate initial load
   callback(getHistory());
 
   return () => {
