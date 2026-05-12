@@ -2,8 +2,9 @@
 
 import { ScanEntry } from '@/lib/storage';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
-import { History, Trash2, ChevronRight, FileText } from 'lucide-react';
+import { History as HistoryIcon, Trash2, ChevronRight, FileText } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 
@@ -30,7 +31,7 @@ export function ScanLedger({ history, onSelect, onDelete }: ScanLedgerProps) {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h3 className="text-2xl font-bold flex items-center gap-3 text-[#0F172A]">
-          <History className="h-7 w-7 text-accent" />
+          <HistoryIcon className="h-7 w-7 text-accent" />
           Recent Records
         </h3>
         <Badge className="bg-slate-100 text-slate-500 border-none px-3 py-1 rounded-lg text-[11px] font-black uppercase tracking-widest">

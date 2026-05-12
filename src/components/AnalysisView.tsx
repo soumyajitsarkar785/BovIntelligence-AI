@@ -12,10 +12,7 @@ import {
   Zap, 
   HeartPulse, 
   Info,
-  Sparkles,
-  ShieldCheck,
   Globe,
-  BarChart4,
   Scale,
   MapPin,
   Stethoscope,
@@ -49,7 +46,6 @@ export function AnalysisView({ result }: AnalysisViewProps) {
 
   return (
     <div className="space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-10 duration-700">
-      {/* Top Header Card */}
       <div className="bg-white rounded-[2rem] p-6 lg:p-10 shadow-xl shadow-slate-200/50 border border-white/50 relative overflow-hidden">
         <div className="absolute top-4 right-4 lg:top-8 lg:right-8">
            <Badge className="bg-emerald-100 text-emerald-700 border-none px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest">
@@ -78,7 +74,6 @@ export function AnalysisView({ result }: AnalysisViewProps) {
         </div>
       </div>
 
-      {/* Main Tabs Segmented Controller Style */}
       <Tabs defaultValue="summary" className="w-full">
         <TabsList className="bg-slate-200/40 p-1 rounded-2xl h-14 flex gap-1 shadow-inner border border-slate-200 mb-8">
           <TabsTrigger value="summary" className="flex-1 rounded-xl data-[state=active]:bg-white data-[state=active]:text-[#0F172A] data-[state=active]:shadow-md font-bold text-slate-500 transition-all text-sm">Dashboard</TabsTrigger>

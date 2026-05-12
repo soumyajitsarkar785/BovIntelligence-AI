@@ -3,26 +3,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { 
   Camera, 
-  Upload, 
   LayoutDashboard, 
   Zap, 
   Dna, 
   HeartPulse, 
   ShieldCheck,
   RefreshCcw,
-  Sparkles,
-  Database,
-  Search,
-  Settings,
-  Bell,
-  ChevronRight,
-  BarChart3,
-  Cpu,
-  History as HistoryIcon,
-  Menu,
   Plus,
   Scan,
-  User
+  Cpu,
+  History as HistoryIcon,
+  Bell
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -51,8 +42,10 @@ export default function BovindexPro() {
   const [history, setHistory] = useState<ScanEntry[]>([]);
   const [loadingStep, setLoadingStep] = useState('');
   const [activeTab, setActiveTab] = useState<'scan' | 'history' | 'profile'>('scan');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     setHistory(getHistory());
   }, []);
 
@@ -153,11 +146,12 @@ export default function BovindexPro() {
     setLoadingStep('');
   };
 
+  if (!mounted) return null;
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col font-body pb-24 lg:pb-0">
       <Toaster />
       
-      {/* App Header (Sticky) */}
       <header className="h-16 lg:h-20 bg-white/80 backdrop-blur-md border-b sticky top-0 z-[60] px-4 lg:px-10 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 bg-[#0F172A] rounded-xl flex items-center justify-center text-accent shadow-lg shadow-accent/20">
@@ -183,7 +177,6 @@ export default function BovindexPro() {
       <main className="flex-1 p-4 lg:p-10 max-w-7xl mx-auto w-full overflow-x-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
           
-          {/* Main Visualizer Area */}
           <div className="lg:col-span-5 space-y-6">
             <div className="bg-white rounded-[2rem] overflow-hidden shadow-2xl shadow-slate-200/50 border border-white/50 relative aspect-[4/5] lg:aspect-auto lg:h-[600px] group">
               {!photo ? (
@@ -248,7 +241,6 @@ export default function BovindexPro() {
               />
             </div>
 
-            {/* Desktop Ledger View */}
             <div className="lg:block hidden bg-white rounded-[2.5rem] p-8 shadow-xl shadow-slate-200/50 border border-white/50">
                <ScanLedger 
                   history={history} 
@@ -262,7 +254,6 @@ export default function BovindexPro() {
             </div>
           </div>
 
-          {/* Details Content Area */}
           <div className="lg:col-span-7">
             {isScanning ? (
               <div className="space-y-8 animate-pulse p-4 lg:p-0">
@@ -312,7 +303,6 @@ export default function BovindexPro() {
         </div>
       </main>
 
-      {/* Mobile Bottom Navigation (Native App Style) */}
       <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t h-20 px-8 flex items-center justify-between lg:hidden z-[100] rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
         <Button 
           variant="ghost" 
@@ -342,7 +332,6 @@ export default function BovindexPro() {
         </Button>
       </div>
 
-      {/* Mobile History View Overlay */}
       {activeTab === 'history' && (
         <div className="fixed inset-0 bg-[#F8FAFC] z-[110] lg:hidden p-4 overflow-y-auto animate-in slide-in-from-right duration-300">
           <div className="flex items-center justify-between mb-8">
