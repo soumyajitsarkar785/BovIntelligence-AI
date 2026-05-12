@@ -1,36 +1,13 @@
-
 'use client';
 
-import { 
-  getFirestore, 
-  collection, 
-  addDoc, 
-  query, 
-  orderBy, 
-  onSnapshot,
-  deleteDoc,
-  doc,
-  Firestore,
-  serverTimestamp
-} from 'firebase/firestore';
-import { initializeApp, getApps, getApp } from 'firebase/app';
-
-// Firebase configuration placeholder - normally populated by Firebase Studio
-const firebaseConfig = {
-  apiKey: "AIzaSy...",
-  authDomain: "breed-classifier.firebaseapp.com",
-  projectId: "breed-classifier",
-  storageBucket: "breed-classifier.appspot.com",
-  messagingSenderId: "12345",
-  appId: "1:12345:web:67890"
-};
-
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-const db = getFirestore(app);
+/**
+ * @fileOverview Local Database Ledger for Breed Classifier.
+ * Uses persistent local storage to act as a proper backend without cloud dependencies.
+ */
 
 export interface ScanEntry {
   id: string;
-  timestamp: any;
+  timestamp: number;
   photoDataUri: string;
   breedName: string;
   confidence: string;
@@ -58,28 +35,70 @@ export interface ScanEntry {
   };
 }
 
+const STORAGE_KEY = 'breed_classifier_vault_v2';
+
+/**
+ * Returns the current scan history from local storage.
+ */
+function getHistory(): ScanEntry[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    console.error("Vault Access Error:", e);
+    return [];
+  }
+}
+
+/**
+ * Saves a new scan record to the persistent ledger.
+ */
 export function saveScan(entry: Omit<ScanEntry, 'timestamp'>) {
-  const colRef = collection(db, 'scans');
-  addDoc(colRef, {
+  if (typeof window === 'undefined') return;
+  
+  const history = getHistory();
+  const newEntry: ScanEntry = {
     ...entry,
-    timestamp: serverTimestamp(),
-  }).catch(err => console.error("Firestore Save Error:", err));
+    timestamp: Date.now()
+  };
+  
+  const updatedHistory = [newEntry, ...history];
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedHistory));
+  
+  // Broadcast update to all components
+  window.dispatchEvent(new CustomEvent('vault-update', { detail: updatedHistory }));
 }
 
+/**
+ * Subscribes to changes in the scan history.
+ */
 export function subscribeToHistory(callback: (history: ScanEntry[]) => void) {
-  const q = query(collection(db, 'scans'), orderBy('timestamp', 'desc'));
-  return onSnapshot(q, (snapshot) => {
-    const data = snapshot.docs.map(doc => ({
-      ...doc.data(),
-      id: doc.id,
-      // Handle potential null timestamp during local update
-      timestamp: doc.data().timestamp?.toMillis() || Date.now()
-    })) as ScanEntry[];
-    callback(data);
-  });
+  if (typeof window === 'undefined') return () => {};
+
+  const handleUpdate = (e: any) => {
+    callback(e.detail || getHistory());
+  };
+
+  window.addEventListener('vault-update', handleUpdate);
+  window.addEventListener('storage', () => callback(getHistory()));
+  
+  // Immediate initial load
+  callback(getHistory());
+
+  return () => {
+    window.removeEventListener('vault-update', handleUpdate);
+    window.removeEventListener('storage', () => callback(getHistory()));
+  };
 }
 
+/**
+ * Removes a specific record from the ledger.
+ */
 export async function deleteScan(id: string) {
-  const docRef = doc(db, 'scans', id);
-  await deleteDoc(docRef);
+  if (typeof window === 'undefined') return;
+  const history = getHistory();
+  const updatedHistory = history.filter(item => item.id !== id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedHistory));
+  window.dispatchEvent(new CustomEvent('vault-update', { detail: updatedHistory }));
 }

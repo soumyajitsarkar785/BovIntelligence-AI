@@ -1,4 +1,3 @@
-
 'use client';
 
 import { ScanEntry } from '@/lib/storage';
@@ -11,7 +10,6 @@ import {
   Zap, 
   HeartPulse, 
   Share2,
-  FileCheck,
   Microscope,
   ChevronRight,
   Copy,
@@ -43,24 +41,17 @@ export function AnalysisView({ result }: AnalysisViewProps) {
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
-    toast({ title: "JSON Exported", description: "Technical data saved." });
+    toast({ title: "Exported", description: "JSON data saved." });
   };
 
   const handleCopyText = () => {
     const text = `
 Breed Classifier Diagnostic Report
 -------------------------
-Report ID: ${result.id}
+ID: ${result.id}
 Breed: ${result.breedName}
 Confidence: ${result.confidence}
-Species: ${result.speciesType}
-
-Diagnostic Note: ${result.diagnosticNote}
-
-Analysis:
-- Cranial: ${result.physiologicalAnalysis.cranial}
-- Thoracic: ${result.physiologicalAnalysis.thoracic}
-- Body: ${result.physiologicalAnalysis.body}
+Note: ${result.diagnosticNote}
     `.trim();
 
     navigator.clipboard.writeText(text);
@@ -76,15 +67,15 @@ Analysis:
 
   return (
     <div className="space-y-6 pb-20 animate-in fade-in duration-500 px-2 print:p-0 print:space-y-4">
-      {/* Report Header for Printing */}
+      {/* Print-only Header */}
       <div className="hidden print:flex justify-between items-center border-b pb-4 mb-4">
         <div className="flex items-center gap-2">
           <Fingerprint className="h-6 w-6 text-accent" />
           <h1 className="text-xl font-headline font-bold">Breed Classifier Report</h1>
         </div>
         <div className="text-right">
-          <p className="text-[10px] font-bold uppercase text-slate-400">Record ID: {result.id}</p>
-          <p className="text-[10px] font-bold text-slate-500">{new Date(result.timestamp).toLocaleString()}</p>
+          <p className="text-[10px] font-bold text-slate-400">ID: {result.id}</p>
+          <p className="text-[10px] font-bold text-slate-500">{new Date(result.timestamp).toLocaleDateString()}</p>
         </div>
       </div>
 
@@ -93,14 +84,13 @@ Analysis:
         <Image src={result.photoDataUri} alt={result.breedName} fill className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent flex flex-col justify-end p-6 print:bg-none print:relative print:p-2">
           <Badge className="w-fit bg-accent text-white border-none px-3 py-1 rounded-full text-[8px] font-bold uppercase tracking-widest mb-2 print:bg-slate-100 print:text-slate-800">
-            Confidence: {result.confidence || 'N/A'}
+            Confidence: {result.confidence}
           </Badge>
           <h2 className="text-2xl font-headline font-bold text-white leading-tight print:text-slate-900">{result.breedName}</h2>
-          <p className="hidden print:block text-[10px] font-bold text-slate-500 uppercase mt-1">Species: {result.speciesType}</p>
         </div>
       </div>
 
-      {/* Action Buttons - Hidden on Print */}
+      {/* Actions */}
       <div className="flex gap-3 print:hidden">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -136,96 +126,78 @@ Analysis:
             Diagnostic
           </TabsTrigger>
           <TabsTrigger value="morphology" className="flex-1 rounded-xl data-[state=active]:bg-white data-[state=active]:text-accent font-bold text-[8px] uppercase">
-            Morphology
+            Structure
           </TabsTrigger>
           <TabsTrigger value="protocol" className="flex-1 rounded-xl data-[state=active]:bg-white data-[state=active]:text-accent font-bold text-[8px] uppercase">
-            Guide
+            Protocol
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="diagnostics" className="space-y-4 print:mt-0">
-          <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white print:rounded-xl print:border print:shadow-none">
+        <TabsContent value="diagnostics" className="space-y-4">
+          <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white print:border print:shadow-none">
             <div className="flex items-center gap-2 text-slate-400 mb-3">
               <Microscope className="h-4 w-4 text-accent" />
-              <span className="text-[9px] font-bold uppercase">Clinical Diagnostic Note</span>
+              <span className="text-[9px] font-bold uppercase">Clinical Note</span>
             </div>
             <p className="text-sm font-medium text-slate-700 leading-relaxed italic">
-              "{result.diagnosticNote || "No diagnostic details available."}"
+              "{result.diagnosticNote || "Processing data..."}"
             </p>
           </Card>
 
-          <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white space-y-4 print:rounded-xl print:border print:shadow-none">
+          <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white space-y-4 print:border print:shadow-none">
              <div className="flex items-center justify-between">
                 <span className="text-[9px] font-bold uppercase text-slate-400">Genomic Markers</span>
                 <Badge variant="outline" className="text-[8px]">{markers.length} Points</Badge>
              </div>
              <div className="flex flex-wrap gap-2">
-                {markers.length > 0 ? markers.map((marker, i) => (
+                {markers.map((marker, i) => (
                   <Badge key={i} className="bg-blue-50 text-blue-600 border-none text-[8px] px-2 py-0.5">
                     {marker}
                   </Badge>
-                )) : (
-                  <span className="text-[10px] text-slate-400">Pending data...</span>
-                )}
-             </div>
-             <div className="h-px bg-slate-50" />
-             <div className="space-y-1">
-                <span className="text-[9px] font-bold uppercase text-accent">Classification Logic</span>
-                <p className="text-[10px] text-slate-500 leading-relaxed">{result.negativeConstraints || "Standard reasoning applied."}</p>
+                ))}
              </div>
           </Card>
         </TabsContent>
 
-        <TabsContent value="morphology" className="space-y-4 print:mt-4 print:block">
-          <h3 className="hidden print:block text-xs font-bold uppercase mb-2">Morphological Analysis</h3>
+        <TabsContent value="morphology" className="space-y-3 print:block">
           <div className="grid gap-3">
              {[
                { title: 'Cranial Morphology', data: analysis.cranial },
                { title: 'Thoracic Morphology', data: analysis.thoracic },
                { title: 'Body Frame', data: analysis.body }
              ].map((item, idx) => (
-               <Card key={idx} className="rounded-[1.5rem] p-4 border-none shadow-sm bg-white flex gap-4 print:rounded-xl print:border print:shadow-none">
-                  <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 print:hidden">
-                    <ChevronRight className="h-4 w-4 text-accent" />
-                  </div>
+               <Card key={idx} className="rounded-[1.5rem] p-4 border-none shadow-sm bg-white flex gap-4 print:border">
+                  <ChevronRight className="h-4 w-4 text-accent shrink-0 mt-1 print:hidden" />
                   <div className="space-y-1">
                     <h4 className="text-[9px] font-bold uppercase text-slate-800">{item.title}</h4>
-                    <p className="text-[11px] text-slate-500 leading-tight">{item.data || 'N/A'}</p>
+                    <p className="text-[11px] text-slate-500 leading-tight">{item.data}</p>
                   </div>
                </Card>
              ))}
           </div>
         </TabsContent>
 
-        <TabsContent value="protocol" className="space-y-4 print:mt-4 print:block">
-          <h3 className="hidden print:block text-xs font-bold uppercase mb-2">Management Protocol</h3>
-          <Card className="rounded-[2rem] p-5 bg-white shadow-sm border-none flex gap-4 items-start print:rounded-xl print:border print:shadow-none">
-             <div className="h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center shrink-0 print:hidden">
-               <Zap className="h-4 w-4 text-orange-500" />
-             </div>
+        <TabsContent value="protocol" className="space-y-4 print:block">
+          <Card className="rounded-[2rem] p-5 bg-white shadow-sm border-none flex gap-4 items-start print:border">
+             <Zap className="h-5 w-5 text-orange-500 shrink-0 print:hidden" />
              <div className="space-y-1">
-               <h3 className="text-xs font-bold text-[#0F172A] uppercase">Nutrition Management</h3>
-               <p className="text-[11px] text-slate-500 leading-relaxed">{result.careGuide?.nutritionTips || 'N/A'}</p>
+               <h3 className="text-[9px] font-bold text-[#0F172A] uppercase">Nutrition</h3>
+               <p className="text-[11px] text-slate-500 leading-relaxed">{result.careGuide?.nutritionTips}</p>
              </div>
           </Card>
 
-          <Card className="rounded-[2rem] p-5 bg-white shadow-sm border-none flex gap-4 items-start print:rounded-xl print:border print:shadow-none">
-             <div className="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0 print:hidden">
-               <HeartPulse className="h-4 w-4 text-red-500" />
-             </div>
+          <Card className="rounded-[2rem] p-5 bg-white shadow-sm border-none flex gap-4 items-start print:border">
+             <HeartPulse className="h-5 w-5 text-red-500 shrink-0 print:hidden" />
              <div className="space-y-1">
-               <h3 className="text-xs font-bold text-[#0F172A] uppercase">Clinical Health Care</h3>
-               <p className="text-[11px] text-slate-500 leading-relaxed">{result.careGuide?.healthTips || 'N/A'}</p>
+               <h3 className="text-[9px] font-bold text-[#0F172A] uppercase">Health</h3>
+               <p className="text-[11px] text-slate-500 leading-relaxed">{result.careGuide?.healthTips}</p>
              </div>
           </Card>
         </TabsContent>
       </Tabs>
 
-      {/* Print Footer */}
-      <div className="hidden print:block text-center pt-8 mt-8 border-t">
-        <p className="text-[8px] text-slate-400 uppercase tracking-widest font-bold">
-          Generated by Breed Classifier AI Platform &copy; {new Date().getFullYear()}
-        </p>
+      <div className="hidden print:block text-center pt-8 mt-8 border-t text-[8px] text-slate-400 uppercase tracking-widest font-bold">
+        &copy; {new Date().getFullYear()} Breed Classifier AI Platform
       </div>
     </div>
   );
