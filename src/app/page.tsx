@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -11,7 +12,7 @@ import {
   Cpu,
   ArrowRight,
   TrendingUp,
-  Search
+  Fingerprint
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -24,12 +25,12 @@ import { AnalysisView } from '@/components/AnalysisView';
 import { ScanOverlay } from '@/components/ScanOverlay';
 
 import { analyzeBovine } from '@/ai/flows/bovine-master-flow';
-import { getHistory, saveScan, ScanEntry, deleteScan } from '@/lib/storage';
+import { saveScan, ScanEntry, deleteScan, subscribeToHistory } from '@/lib/storage';
 
 const AppLogo = () => (
   <div className="flex items-center gap-2">
     <div className="h-8 w-8 bg-accent rounded-xl flex items-center justify-center shadow-lg shadow-accent/20">
-      <Search className="h-5 w-5 text-white" />
+      <Fingerprint className="h-5 w-5 text-white" />
     </div>
     <div className="flex flex-col">
       <span className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none mb-0.5">Breed</span>
@@ -51,7 +52,10 @@ export default function BreedClassifierApp() {
   const [activeTab, setActiveTab] = useState<'home' | 'ledger' | 'settings'>('home');
 
   useEffect(() => {
-    setHistory(getHistory());
+    const unsubscribe = subscribeToHistory((data) => {
+      setHistory(data);
+    });
+    return () => unsubscribe();
   }, []);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,9 +96,8 @@ export default function BreedClassifierApp() {
       setScanProgress(70);
       setLoadingStep('Genomic Profiling...');
 
-      const entry: ScanEntry = {
+      const entry: Omit<ScanEntry, 'timestamp'> = {
         id: `BC-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
-        timestamp: Date.now(),
         photoDataUri: dataUri,
         breedName: analysis.primary_breed,
         confidence: analysis.confidence_score,
@@ -110,10 +113,9 @@ export default function BreedClassifierApp() {
 
       setTimeout(() => {
         setScanProgress(100);
-        setResult(entry);
         saveScan(entry);
-        setHistory(getHistory());
         setIsScanning(false);
+        toast({ title: "Analysis Complete", description: "Record saved to cloud vault." });
       }, 800);
 
     } catch (error: any) {
@@ -128,12 +130,16 @@ export default function BreedClassifierApp() {
     }
   };
 
-  const handleDeleteEntry = (id: string) => {
-    deleteScan(id);
-    setHistory(getHistory());
-    if (result?.id === id) {
-      setResult(null);
-      setPhoto(null);
+  const handleDeleteEntry = async (id: string) => {
+    try {
+      await deleteScan(id);
+      if (result?.id === id) {
+        setResult(null);
+        setPhoto(null);
+      }
+      toast({ title: "Record Deleted", description: "Cloud entry removed." });
+    } catch (e) {
+      toast({ title: "Error", description: "Could not delete record.", variant: "destructive" });
     }
   };
 
@@ -141,7 +147,7 @@ export default function BreedClassifierApp() {
     <div className="min-h-screen flex flex-col font-body max-w-md mx-auto shadow-2xl relative bg-transparent pb-24">
       <Toaster />
       
-      <header className="h-16 px-6 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-xl z-50 border-b border-slate-100">
+      <header className="h-16 px-6 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-xl z-50 border-b border-slate-100 print:hidden">
         {result || photo ? (
           <Button variant="ghost" size="icon" onClick={() => {setPhoto(null); setResult(null);}} className="rounded-full bg-slate-100">
             <ArrowLeft className="h-5 w-5 text-slate-700" />
@@ -173,7 +179,7 @@ export default function BreedClassifierApp() {
         ) : activeTab === 'ledger' ? (
           <div className="space-y-6 animate-in slide-in-from-bottom-5">
             <div className="px-2">
-              <h2 className="text-2xl font-headline font-bold">Archives</h2>
+              <h2 className="text-2xl font-headline font-bold">Cloud Vault</h2>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{history.length} Verified Records</p>
             </div>
             <ScanLedger history={history} onSelect={(e) => {setPhoto(e.photoDataUri); setResult(e);}} onDelete={handleDeleteEntry} />
@@ -187,8 +193,8 @@ export default function BreedClassifierApp() {
               
               <Card className="p-5 rounded-[2rem] bg-[#0F172A] text-white border-none shadow-2xl flex justify-between items-center">
                 <div className="space-y-1">
-                  <p className="text-[8px] font-bold text-white/40 uppercase tracking-widest">Master Diagnostic</p>
-                  <p className="text-lg font-bold">Ready to Scan</p>
+                  <p className="text-[8px] font-bold text-white/40 uppercase tracking-widest">Cloud Intelligence</p>
+                  <p className="text-lg font-bold">Online & Ready</p>
                 </div>
                 <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center">
                   <Activity className="h-5 w-5 text-accent" />
@@ -201,22 +207,22 @@ export default function BreedClassifierApp() {
                 <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center mb-2">
                   <Cpu className="h-5 w-5 text-accent" />
                 </div>
-                <h4 className="font-bold text-[9px] uppercase">Morphology</h4>
+                <h4 className="font-bold text-[9px] uppercase">Analysis</h4>
               </div>
               <div onClick={() => setActiveTab('ledger')} className="bg-white/60 backdrop-blur-md p-5 rounded-[2rem] border border-white shadow-sm flex flex-col items-center cursor-pointer">
                 <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center mb-2">
                   <TrendingUp className="h-5 w-5 text-blue-500" />
                 </div>
-                <h4 className="font-bold text-[9px] uppercase">Records</h4>
+                <h4 className="font-bold text-[9px] uppercase">Vault</h4>
               </div>
             </div>
 
             {history.length > 0 && (
               <div className="space-y-4 px-2 pb-6">
                  <div className="flex justify-between items-center px-1">
-                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Recent Activity</h3>
+                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Recent Records</h3>
                     <Button variant="link" onClick={() => setActiveTab('ledger')} className="text-accent font-bold text-[9px] uppercase p-0">
-                      Vault <ArrowRight className="h-3 w-3 ml-1" />
+                      View All <ArrowRight className="h-3 w-3 ml-1" />
                     </Button>
                  </div>
                  <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
@@ -235,7 +241,7 @@ export default function BreedClassifierApp() {
         )}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-2xl border-t border-slate-100 h-20 px-10 flex items-center justify-between z-50 rounded-t-[2.5rem]">
+      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-2xl border-t border-slate-100 h-20 px-10 flex items-center justify-between z-50 rounded-t-[2.5rem] print:hidden">
         <Button variant="ghost" onClick={() => { setActiveTab('home'); setPhoto(null); setResult(null); }} className={`flex flex-col gap-1 h-auto p-0 ${activeTab === 'home' ? 'text-accent' : 'text-slate-300'}`}>
           <LayoutDashboard className="h-5 w-5" />
           <span className="text-[8px] font-bold uppercase">Main</span>

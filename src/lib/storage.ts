@@ -1,12 +1,39 @@
+
 'use client';
+
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  query, 
+  orderBy, 
+  onSnapshot,
+  deleteDoc,
+  doc,
+  Firestore,
+  serverTimestamp
+} from 'firebase/firestore';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+
+// Firebase configuration placeholder - normally populated by Firebase Studio
+const firebaseConfig = {
+  apiKey: "AIzaSy...",
+  authDomain: "breed-classifier.firebaseapp.com",
+  projectId: "breed-classifier",
+  storageBucket: "breed-classifier.appspot.com",
+  messagingSenderId: "12345",
+  appId: "1:12345:web:67890"
+};
+
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 export interface ScanEntry {
   id: string;
-  timestamp: number;
+  timestamp: any;
   photoDataUri: string;
   breedName: string;
   confidence: string;
-  // Advanced Diagnostics
   speciesType: string;
   detectedStatus: string;
   physiologicalAnalysis: {
@@ -17,7 +44,6 @@ export interface ScanEntry {
   visualMarkers: string[];
   negativeConstraints: string;
   diagnosticNote: string;
-  // Legacy support & UI requirements
   traits: {
     origin: string;
     milkYieldEstimates: string;
@@ -32,34 +58,28 @@ export interface ScanEntry {
   };
 }
 
-const STORAGE_KEY = 'bovintelligence_vault_v1';
-
-export function saveScan(entry: ScanEntry) {
-  if (typeof window === 'undefined') return;
-  const history = getHistory();
-  const updated = [entry, ...history].slice(0, 100);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+export function saveScan(entry: Omit<ScanEntry, 'timestamp'>) {
+  const colRef = collection(db, 'scans');
+  addDoc(colRef, {
+    ...entry,
+    timestamp: serverTimestamp(),
+  }).catch(err => console.error("Firestore Save Error:", err));
 }
 
-export function getHistory(): ScanEntry[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (!stored) return [];
-  try {
-    return JSON.parse(stored);
-  } catch (e) {
-    return [];
-  }
+export function subscribeToHistory(callback: (history: ScanEntry[]) => void) {
+  const q = query(collection(db, 'scans'), orderBy('timestamp', 'desc'));
+  return onSnapshot(q, (snapshot) => {
+    const data = snapshot.docs.map(doc => ({
+      ...doc.data(),
+      id: doc.id,
+      // Handle potential null timestamp during local update
+      timestamp: doc.data().timestamp?.toMillis() || Date.now()
+    })) as ScanEntry[];
+    callback(data);
+  });
 }
 
-export function deleteScan(id: string) {
-  if (typeof window === 'undefined') return;
-  const history = getHistory();
-  const updated = history.filter(item => item.id !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-}
-
-export function clearHistory() {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem(STORAGE_KEY);
+export async function deleteScan(id: string) {
+  const docRef = doc(db, 'scans', id);
+  await deleteDoc(docRef);
 }

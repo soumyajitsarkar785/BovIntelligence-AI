@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ScanEntry } from '@/lib/storage';
@@ -16,7 +17,7 @@ import {
   Copy,
   Printer,
   FileJson,
-  MoreVertical
+  Fingerprint
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
@@ -38,60 +39,64 @@ export function AnalysisView({ result }: AnalysisViewProps) {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `BovIntelligence_Report_${result.id}.json`);
+    downloadAnchorNode.setAttribute("download", `Breed_Report_${result.id}.json`);
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
-    toast({ title: "JSON Exported", description: "Technical data saved successfully." });
+    toast({ title: "JSON Exported", description: "Technical data saved." });
   };
 
   const handleCopyText = () => {
     const text = `
-BovIntelligence AI Report
+Breed Classifier Diagnostic Report
 -------------------------
 Report ID: ${result.id}
 Breed: ${result.breedName}
 Confidence: ${result.confidence}
 Species: ${result.speciesType}
 
-Diagnostic Note:
-${result.diagnosticNote}
+Diagnostic Note: ${result.diagnosticNote}
 
-Morphology:
+Analysis:
 - Cranial: ${result.physiologicalAnalysis.cranial}
 - Thoracic: ${result.physiologicalAnalysis.thoracic}
 - Body: ${result.physiologicalAnalysis.body}
-
-Care Guide:
-- Nutrition: ${result.careGuide.nutritionTips}
-- Health: ${result.careGuide.healthTips}
     `.trim();
 
     navigator.clipboard.writeText(text);
-    toast({ title: "Copied to Clipboard", description: "Report text ready to share." });
+    toast({ title: "Copied", description: "Report text copied." });
   };
 
   const handlePrint = () => {
     window.print();
   };
 
-  // Safe data access
   const markers = result.visualMarkers || [];
   const analysis = result.physiologicalAnalysis || { cranial: 'N/A', thoracic: 'N/A', body: 'N/A' };
 
   return (
-    <div className="space-y-6 pb-20 animate-in fade-in duration-500 px-2 print:p-0">
-      {/* Top Banner - Hidden on Print */}
-      <div className="relative aspect-square rounded-[2.5rem] overflow-hidden shadow-xl border-4 border-white print:rounded-none print:border-none print:h-[300px]">
+    <div className="space-y-6 pb-20 animate-in fade-in duration-500 px-2 print:p-0 print:space-y-4">
+      {/* Report Header for Printing */}
+      <div className="hidden print:flex justify-between items-center border-b pb-4 mb-4">
+        <div className="flex items-center gap-2">
+          <Fingerprint className="h-6 w-6 text-accent" />
+          <h1 className="text-xl font-headline font-bold">Breed Classifier Report</h1>
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] font-bold uppercase text-slate-400">Record ID: {result.id}</p>
+          <p className="text-[10px] font-bold text-slate-500">{new Date(result.timestamp).toLocaleString()}</p>
+        </div>
+      </div>
+
+      {/* Visual Header */}
+      <div className="relative aspect-square rounded-[2.5rem] overflow-hidden shadow-xl border-4 border-white print:aspect-[16/9] print:rounded-2xl print:border-2">
         <Image src={result.photoDataUri} alt={result.breedName} fill className="object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent flex flex-col justify-end p-6 print:hidden">
-          <Badge className="w-fit bg-accent text-white border-none px-3 py-1 rounded-full text-[8px] font-bold uppercase tracking-widest mb-2">
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent flex flex-col justify-end p-6 print:bg-none print:relative print:p-2">
+          <Badge className="w-fit bg-accent text-white border-none px-3 py-1 rounded-full text-[8px] font-bold uppercase tracking-widest mb-2 print:bg-slate-100 print:text-slate-800">
             Confidence: {result.confidence || 'N/A'}
           </Badge>
-          <h2 className="text-2xl font-headline font-bold text-white leading-tight">{result.breedName}</h2>
-          <div className="flex items-center gap-2 text-white/50 text-[9px] font-bold uppercase mt-1">
-             <FileCheck className="h-3 w-3" /> ID: {result.id}
-          </div>
+          <h2 className="text-2xl font-headline font-bold text-white leading-tight print:text-slate-900">{result.breedName}</h2>
+          <p className="hidden print:block text-[10px] font-bold text-slate-500 uppercase mt-1">Species: {result.speciesType}</p>
         </div>
       </div>
 
@@ -106,7 +111,7 @@ Care Guide:
           <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 bg-white/95 backdrop-blur-md border-slate-100 shadow-2xl">
             <DropdownMenuItem onClick={handlePrint} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
               <Printer className="h-4 w-4 text-slate-500" />
-              <span className="text-[10px] font-bold uppercase">Print / PDF</span>
+              <span className="text-[10px] font-bold uppercase">Print / Save PDF</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleCopyText} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
               <Copy className="h-4 w-4 text-slate-500" />
@@ -114,7 +119,7 @@ Care Guide:
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleExportJSON} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
               <FileJson className="h-4 w-4 text-slate-500" />
-              <span className="text-[10px] font-bold uppercase">Download JSON</span>
+              <span className="text-[10px] font-bold uppercase">JSON Data</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -124,32 +129,32 @@ Care Guide:
         </Button>
       </div>
 
-      {/* Tabs / Content Section */}
+      {/* Analysis Tabs */}
       <Tabs defaultValue="diagnostics" className="w-full">
         <TabsList className="bg-slate-100 p-1 rounded-2xl h-11 flex gap-1 mb-6 print:hidden">
           <TabsTrigger value="diagnostics" className="flex-1 rounded-xl data-[state=active]:bg-white data-[state=active]:text-accent font-bold text-[8px] uppercase">
-            Analysis
+            Diagnostic
           </TabsTrigger>
           <TabsTrigger value="morphology" className="flex-1 rounded-xl data-[state=active]:bg-white data-[state=active]:text-accent font-bold text-[8px] uppercase">
-            Structure
+            Morphology
           </TabsTrigger>
           <TabsTrigger value="protocol" className="flex-1 rounded-xl data-[state=active]:bg-white data-[state=active]:text-accent font-bold text-[8px] uppercase">
-            Protocol
+            Guide
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="diagnostics" className="space-y-4">
-          <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white print:shadow-none print:border">
+        <TabsContent value="diagnostics" className="space-y-4 print:mt-0">
+          <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white print:rounded-xl print:border print:shadow-none">
             <div className="flex items-center gap-2 text-slate-400 mb-3">
               <Microscope className="h-4 w-4 text-accent" />
-              <span className="text-[9px] font-bold uppercase">Diagnostic Note</span>
+              <span className="text-[9px] font-bold uppercase">Clinical Diagnostic Note</span>
             </div>
             <p className="text-sm font-medium text-slate-700 leading-relaxed italic">
               "{result.diagnosticNote || "No diagnostic details available."}"
             </p>
           </Card>
 
-          <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white space-y-4 print:shadow-none print:border">
+          <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white space-y-4 print:rounded-xl print:border print:shadow-none">
              <div className="flex items-center justify-between">
                 <span className="text-[9px] font-bold uppercase text-slate-400">Genomic Markers</span>
                 <Badge variant="outline" className="text-[8px]">{markers.length} Points</Badge>
@@ -160,26 +165,27 @@ Care Guide:
                     {marker}
                   </Badge>
                 )) : (
-                  <span className="text-[10px] text-slate-400">Analysis pending...</span>
+                  <span className="text-[10px] text-slate-400">Pending data...</span>
                 )}
              </div>
-             <div className="h-px bg-slate-50 print:block" />
+             <div className="h-px bg-slate-50" />
              <div className="space-y-1">
                 <span className="text-[9px] font-bold uppercase text-accent">Classification Logic</span>
-                <p className="text-[10px] text-slate-500 leading-relaxed">{result.negativeConstraints || "Standard veterinary reasoning applied."}</p>
+                <p className="text-[10px] text-slate-500 leading-relaxed">{result.negativeConstraints || "Standard reasoning applied."}</p>
              </div>
           </Card>
         </TabsContent>
 
-        <TabsContent value="morphology" className="space-y-4">
+        <TabsContent value="morphology" className="space-y-4 print:mt-4 print:block">
+          <h3 className="hidden print:block text-xs font-bold uppercase mb-2">Morphological Analysis</h3>
           <div className="grid gap-3">
              {[
                { title: 'Cranial Morphology', data: analysis.cranial },
                { title: 'Thoracic Morphology', data: analysis.thoracic },
                { title: 'Body Frame', data: analysis.body }
              ].map((item, idx) => (
-               <Card key={idx} className="rounded-[1.5rem] p-4 border-none shadow-sm bg-white flex gap-4 print:shadow-none print:border">
-                  <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
+               <Card key={idx} className="rounded-[1.5rem] p-4 border-none shadow-sm bg-white flex gap-4 print:rounded-xl print:border print:shadow-none">
+                  <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 print:hidden">
                     <ChevronRight className="h-4 w-4 text-accent" />
                   </div>
                   <div className="space-y-1">
@@ -191,9 +197,10 @@ Care Guide:
           </div>
         </TabsContent>
 
-        <TabsContent value="protocol" className="space-y-4">
-          <Card className="rounded-[2rem] p-5 bg-white shadow-sm border-none flex gap-4 items-start print:shadow-none print:border">
-             <div className="h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
+        <TabsContent value="protocol" className="space-y-4 print:mt-4 print:block">
+          <h3 className="hidden print:block text-xs font-bold uppercase mb-2">Management Protocol</h3>
+          <Card className="rounded-[2rem] p-5 bg-white shadow-sm border-none flex gap-4 items-start print:rounded-xl print:border print:shadow-none">
+             <div className="h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center shrink-0 print:hidden">
                <Zap className="h-4 w-4 text-orange-500" />
              </div>
              <div className="space-y-1">
@@ -202,8 +209,8 @@ Care Guide:
              </div>
           </Card>
 
-          <Card className="rounded-[2rem] p-5 bg-white shadow-sm border-none flex gap-4 items-start print:shadow-none print:border">
-             <div className="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+          <Card className="rounded-[2rem] p-5 bg-white shadow-sm border-none flex gap-4 items-start print:rounded-xl print:border print:shadow-none">
+             <div className="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0 print:hidden">
                <HeartPulse className="h-4 w-4 text-red-500" />
              </div>
              <div className="space-y-1">
@@ -213,6 +220,13 @@ Care Guide:
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Print Footer */}
+      <div className="hidden print:block text-center pt-8 mt-8 border-t">
+        <p className="text-[8px] text-slate-400 uppercase tracking-widest font-bold">
+          Generated by Breed Classifier AI Platform &copy; {new Date().getFullYear()}
+        </p>
+      </div>
     </div>
   );
 }
