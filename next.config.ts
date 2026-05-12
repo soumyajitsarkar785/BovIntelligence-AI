@@ -29,9 +29,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  experimental: {
-    // Ensuring no invalid keys like allowedDevOrigins are present
-  }
+  // Removed experimental.allowedDevOrigins as it was causing unrecognized key errors in this version
 };
 
 export default nextConfig;

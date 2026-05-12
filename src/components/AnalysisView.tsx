@@ -1,7 +1,6 @@
 'use client';
 
 import { ScanEntry } from '@/lib/storage';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -59,7 +58,9 @@ Note: ${result.diagnosticNote}
   };
 
   const handlePrint = () => {
-    window.print();
+    if (typeof window !== 'undefined') {
+      window.print();
+    }
   };
 
   const markers = result.visualMarkers || [];
@@ -99,15 +100,15 @@ Note: ${result.diagnosticNote}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 bg-white/95 backdrop-blur-md border-slate-100 shadow-2xl">
-            <DropdownMenuItem onClick={handlePrint} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
+            <DropdownMenuItem onSelect={handlePrint} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
               <Printer className="h-4 w-4 text-slate-500" />
               <span className="text-[10px] font-bold uppercase">Print / Save PDF</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleCopyText} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
+            <DropdownMenuItem onSelect={handleCopyText} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
               <Copy className="h-4 w-4 text-slate-500" />
               <span className="text-[10px] font-bold uppercase">Copy Text</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleExportJSON} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
+            <DropdownMenuItem onSelect={handleExportJSON} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
               <FileJson className="h-4 w-4 text-slate-500" />
               <span className="text-[10px] font-bold uppercase">JSON Data</span>
             </DropdownMenuItem>
