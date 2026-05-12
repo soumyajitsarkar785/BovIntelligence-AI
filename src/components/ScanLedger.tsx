@@ -1,4 +1,3 @@
-
 'use client';
 
 import { ScanEntry } from '@/lib/storage';
@@ -18,7 +17,7 @@ interface ScanLedgerProps {
 export function ScanLedger({ history, onSelect, onDelete }: ScanLedgerProps) {
   if (history.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center px-10 animate-in fade-in duration-[1000ms]">
+      <div className="flex flex-col items-center justify-center py-20 text-center px-10 animate-in fade-in duration-1000">
         <div className="h-20 w-20 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mb-6 border border-slate-100">
           <Database className="h-8 w-8 text-slate-200" />
         </div>
