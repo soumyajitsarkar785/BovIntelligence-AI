@@ -1,49 +1,64 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 
-interface Feature {
-  id: string;
-  name: string;
+interface Point {
+  id: number;
+  label: string;
   top: string;
   left: string;
 }
 
-const BOVINE_FEATURES: Feature[] = [
-  { id: 'horns', name: 'Conformation Analysis', top: '15%', left: '40%' },
-  { id: 'coat', name: 'Genetic Patterning', top: '50%', left: '60%' },
-  { id: 'muzzle', name: 'Phenotype Markers', top: '35%', left: '30%' },
-  { id: 'dewlap', name: 'Environmental Adaptability', top: '55%', left: '35%' },
+const ANALYTICAL_POINTS: Point[] = [
+  { id: 1, label: 'Conformation Analysis', top: '20%', left: '45%' },
+  { id: 2, label: 'Hereditary Pattern', top: '55%', left: '65%' },
+  { id: 3, label: 'Phenotype Vector', top: '40%', left: '35%' },
+  { id: 4, label: 'Environmental Adaptability', top: '65%', left: '40%' },
+  { id: 5, label: 'Yield Potential Score', top: '30%', left: '75%' },
 ];
 
 export function ScanOverlay() {
-  const [visible, setVisible] = useState(false);
+  const [activePoint, setActivePoint] = useState<number | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), 1200);
-    return () => clearTimeout(timer);
+    let current = 0;
+    const interval = setInterval(() => {
+      setActivePoint(ANALYTICAL_POINTS[current].id);
+      current = (current + 1) % ANALYTICAL_POINTS.length;
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  if (!visible) return null;
-
   return (
-    <div className="absolute inset-0 pointer-events-none z-10">
-      {BOVINE_FEATURES.map((feature) => (
+    <div className="absolute inset-0 pointer-events-none z-40">
+      {ANALYTICAL_POINTS.map((point) => (
         <div
-          key={feature.id}
-          className="absolute flex items-center group pointer-events-auto"
-          style={{ top: feature.top, left: feature.left }}
+          key={point.id}
+          className={`absolute flex flex-col items-center transition-all duration-700 ${
+            activePoint === point.id ? 'scale-110 opacity-100' : 'scale-75 opacity-20'
+          }`}
+          style={{ top: point.top, left: point.left }}
         >
           <div className="relative">
-            <div className="h-6 w-6 rounded-full bg-accent/30 animate-ping absolute -inset-1" />
-            <div className="h-4 w-4 rounded-full bg-accent border-2 border-white shadow-[0_0_15px_rgba(189,46,46,0.5)] relative" />
+            <div className="h-10 w-10 rounded-full bg-accent/20 animate-ping absolute -inset-2" />
+            <div className={`h-6 w-6 rounded-full bg-accent border-4 border-white shadow-2xl transition-all ${
+              activePoint === point.id ? 'scale-125' : ''
+            }`} />
           </div>
-          <div className="ml-3 px-3 py-1.5 bg-black/80 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
-            {feature.name}
-          </div>
+          {activePoint === point.id && (
+            <div className="mt-4 px-4 py-2 glass-panel rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-[#0a192f] whitespace-nowrap border-accent/20">
+              {point.label}
+            </div>
+          )}
         </div>
       ))}
+      
+      {/* Simulation lines */}
+      <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none">
+        <line x1="0" y1="20%" x2="100%" y2="80%" stroke="white" strokeWidth="1" />
+        <line x1="0" y1="80%" x2="100%" y2="20%" stroke="white" strokeWidth="1" />
+        <circle cx="50%" cy="50%" r="20%" stroke="white" fill="none" strokeDasharray="10 5" />
+      </svg>
     </div>
   );
 }
