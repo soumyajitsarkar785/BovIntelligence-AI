@@ -63,7 +63,7 @@ Summary: ${result.diagnosticNote}
   };
 
   const handleShare = async () => {
-    if (navigator.share) {
+    if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share({
           title: `BovIntelligence AI Report - ${result.breedName}`,
@@ -89,49 +89,53 @@ Summary: ${result.diagnosticNote}
     });
 
     try {
+      // Ensure element is temporarily visible for capture
+      const originalStyle = element.style.cssText;
+      element.style.position = 'absolute';
+      element.style.left = '-9999px';
+      element.style.top = '0';
+      element.style.display = 'block';
+
       // Create high-res canvas with specific production flags
       const canvas = await html2canvas(element, {
         scale: 2, 
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
+        width: element.offsetWidth,
+        height: element.offsetHeight,
       });
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.98);
+      // Restore original style
+      element.style.cssText = originalStyle;
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF({
         orientation: 'p',
         unit: 'mm',
         format: 'a4',
-        compress: true
       });
       
-      const pdfWidth = Number(pdf.internal.pageSize.getWidth());
-      const pdfHeight = Number(pdf.internal.pageSize.getHeight());
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      const imgWidth = Number(canvas.width);
-      const imgHeight = Number(canvas.height);
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
       const ratio = pdfWidth / imgWidth;
       const canvasHeightInPDF = imgHeight * ratio;
 
       let heightLeft = canvasHeightInPDF;
       let position = 0;
 
-      // Ensure all arguments are finite numbers to prevent jsPDF.scale error
-      if (isNaN(pdfWidth) || isNaN(canvasHeightInPDF) || imgWidth === 0) {
-        throw new Error('Calculated dimensions are invalid.');
-      }
-
       // Add First Page
-      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPDF, undefined, 'FAST');
+      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPDF);
       heightLeft -= pdfHeight;
 
       // Handle Multi-page logic cleanly
       while (heightLeft > 0) {
         position = heightLeft - canvasHeightInPDF;
         pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPDF, undefined, 'FAST');
+        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPDF);
         heightLeft -= pdfHeight;
       }
 
@@ -154,9 +158,9 @@ Summary: ${result.diagnosticNote}
   return (
     <div className="space-y-6 pb-24 animate-in fade-in duration-700">
       
-      {/* Print-optimized layout (Elite Diagnostic Style) */}
-      <div className="hidden">
-        <div id="report-content" className="bg-white p-[15mm] space-y-8 text-slate-900" style={{ width: '210mm', minHeight: '297mm' }}>
+      {/* Print-optimized layout (Burp Suite Style Elite Diagnostic) */}
+      <div style={{ position: 'absolute', left: '-9999px', top: '0', pointerEvents: 'none' }}>
+        <div id="report-content" className="bg-white p-[15mm] space-y-8 text-slate-900" style={{ width: '210mm', minHeight: '297mm', background: 'white' }}>
           
           {/* Header */}
           <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-8">
@@ -177,16 +181,16 @@ Summary: ${result.diagnosticNote}
           </div>
 
           {/* Identification Section */}
-          <div className="grid grid-cols-[1fr_2fr] gap-8 items-center p-6 bg-slate-50 rounded-2xl border border-slate-100" style={{ breakInside: 'avoid' }}>
+          <div className="grid grid-cols-[1fr_2fr] gap-8 items-center p-6 bg-slate-50 rounded-2xl border border-slate-100" style={{ pageBreakInside: 'avoid' }}>
             <div className="relative aspect-square rounded-xl overflow-hidden shadow-md border-2 border-white">
-              <Image src={result.photoDataUri} alt={result.breedName} fill className="object-cover" />
+              <img src={result.photoDataUri} alt={result.breedName} className="object-cover w-full h-full" />
             </div>
             <div className="space-y-3">
-              <Badge className="bg-slate-900 text-white text-[8px] uppercase px-2 py-0.5 font-black">
+              <div className="inline-block bg-slate-900 text-white text-[8px] uppercase px-2 py-0.5 font-black rounded">
                 {result.confidence} Genomic Confidence
-              </Badge>
+              </div>
               <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">{result.breedName}</h2>
-              <div className="h-1 w-12 bg-accent rounded-full" />
+              <div className="h-1 w-12 bg-orange-500 rounded-full" />
               <p className="text-[11px] text-slate-600 leading-relaxed font-medium italic">
                 "{result.diagnosticNote}"
               </p>
@@ -202,7 +206,7 @@ Summary: ${result.diagnosticNote}
               { label: 'Behavioral Ethology & Temperament Profile', value: traits.temperament, icon: HeartPulse },
               { label: 'Elite Morphological Conformation Standards', value: traits.physicalCharacteristics, icon: Scale }
             ].map((trait, i) => (
-              <div key={i} className="space-y-2" style={{ breakInside: 'avoid' }}>
+              <div key={i} className="space-y-2" style={{ pageBreakInside: 'avoid' }}>
                 <div className="flex items-center gap-2 border-b border-slate-100 pb-1.5">
                   <trait.icon className="h-3.5 w-3.5 text-slate-900" />
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-800">{trait.label}</h3>
@@ -215,10 +219,10 @@ Summary: ${result.diagnosticNote}
           </div>
 
           {/* Management Protocols */}
-          <div className="grid grid-cols-2 gap-6 pt-4" style={{ breakInside: 'avoid' }}>
+          <div className="grid grid-cols-2 gap-6 pt-4" style={{ pageBreakInside: 'avoid' }}>
             <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
               <h3 className="text-[9px] font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
-                <div className="h-1.5 w-1.5 bg-accent rounded-full" /> Nutrition Protocol
+                <div className="h-1.5 w-1.5 bg-orange-500 rounded-full" /> Nutrition Protocol
               </h3>
               <p className="text-[11px] text-slate-600 leading-relaxed">{result.careGuide?.nutritionTips}</p>
             </div>
@@ -233,7 +237,7 @@ Summary: ${result.diagnosticNote}
           {/* Footer */}
           <div className="pt-10 text-center border-t border-slate-100 mt-8">
             <p className="text-[8px] text-slate-300 font-black uppercase tracking-[0.4em]">
-              Confidential Genomic Diagnostic Data • Burp-Class Secure Ledger
+              Confidential Genomic Diagnostic Data • BovIntelligence AI Secure Ledger
             </p>
           </div>
         </div>
