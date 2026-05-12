@@ -1,0 +1,45 @@
+
+{
+  "entities": {
+    "UserScan": {
+      "title": "User Scan Record",
+      "description": "A record of a bovine breed scan performed by a user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "photoUrl": { "type": "string" },
+        "breedName": { "type": "string" },
+        "confidence": { "type": "string", "enum": ["High", "Medium", "Low"] },
+        "traits": {
+          "type": "object",
+          "properties": {
+            "origin": { "type": "string" },
+            "milkYield": { "type": "string" },
+            "adaptability": { "type": "string" },
+            "temperament": { "type": "string" },
+            "physical": { "type": "string" },
+            "uses": { "type": "string" }
+          }
+        },
+        "careGuide": {
+          "type": "object",
+          "properties": {
+            "nutrition": { "type": "string" },
+            "health": { "type": "string" }
+          }
+        }
+      },
+      "required": ["id", "timestamp", "breedName"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com"]
+  },
+  "firestore": {
+    "/users/{userId}/scans/{scanId}": {
+      "schema": "#/entities/UserScan",
+      "description": "Collection of breed scans for a specific user."
+    }
+  }
+}
