@@ -29,16 +29,16 @@ const BovineMasterOutputSchema = z.object({
   negative_constraints_check: z.string().describe("Why it does NOT match similar breeds."),
   diagnostic_note: z.string().describe("Expert summary of the analysis."),
   traits: z.object({
-    origin: z.string().describe("Detailed history and geographical origin (at least 5-6 sentences)."),
-    milkYieldEstimates: z.string().describe("Detailed milk yield estimates, quality, and lactation cycle (at least 5-6 sentences)."),
-    environmentalAdaptability: z.string().describe("How the breed handles specific climates, humidity, and terrain (at least 5-6 sentences)."),
-    temperament: z.string().describe("Detailed behavioral characteristics and social dynamics (at least 5-6 sentences)."),
-    physicalCharacteristics: z.string().describe("Detailed conformation, size, weight, and coat traits (at least 5-6 sentences)."),
-    commonUses: z.string().describe("Primary and secondary uses, including draft and dairy (at least 5-6 sentences)."),
+    origin: z.string().describe("Extremely detailed history and geographical origin (MUST be 8-10 long sentences)."),
+    milkYieldEstimates: z.string().describe("Detailed milk yield estimates, quality, and lactation cycle (MUST be 8-10 long sentences)."),
+    environmentalAdaptability: z.string().describe("How the breed handles specific climates, humidity, and terrain (MUST be 8-10 long sentences)."),
+    temperament: z.string().describe("Detailed behavioral characteristics and social dynamics (MUST be 8-10 long sentences)."),
+    physicalCharacteristics: z.string().describe("Detailed conformation, size, weight, and coat traits (MUST be 8-10 long sentences)."),
+    commonUses: z.string().describe("Primary and secondary uses, including draft and dairy (MUST be 8-10 long sentences)."),
   }),
   careGuide: z.object({
-    nutritionTips: z.string().describe("Specific feeding protocol, supplements, and forage for this breed (at least 6-8 sentences)."),
-    healthTips: z.string().describe("Specific disease prevention, vaccinations, and daily care (at least 6-8 sentences)."),
+    nutritionTips: z.string().describe("Specific feeding protocol, supplements, and forage for this breed (MUST be 10-12 detailed sentences)."),
+    healthTips: z.string().describe("Specific disease prevention, vaccinations, and daily care (MUST be 10-12 detailed sentences)."),
   }),
 });
 
@@ -54,8 +54,14 @@ const bovineMasterPrompt = ai.definePrompt({
   output: {schema: BovineMasterOutputSchema},
   prompt: `ROLE: You are an elite Senior Livestock Geneticist and Veterinary Vision Analyst specializing in global cattle and buffalo breed diagnostics.
 
-STRICT PROTOCOL: PROVIDE EXTREMELY DETAILED AND VERBOSE ANALYSIS.
-I need scientific-grade depth. For each trait and care tip, you MUST write at least 5 to 8 full sentences. Do not use bullet points inside the JSON fields, just full, descriptive paragraphs.
+STRICT PROTOCOL: PROVIDE EXTREMELY DETAILED AND VERBOSE ANALYSIS. 
+The user needs highly descriptive and scientific paragraphs. 
+
+MANDATORY RULES:
+1. For every field in 'traits', write at least 8 to 10 full, descriptive sentences. No bullet points.
+2. For every field in 'careGuide', write at least 10 to 12 full, expert-level sentences.
+3. Use professional terminology (e.g., phenotype, genotype, ethology, morphology).
+4. Do not summarize. Be as verbose as possible to create a long, professional report.
 
 IMAGE VALIDATION:
 * Confirm species (Cattle/Buffalo).
@@ -65,8 +71,6 @@ DIAGNOSTIC REASONING:
 1. Cranial: Detailed ear/horn/forehead analysis.
 2. Thoracic: Hump/dewlap/neck musculature details.
 3. Body: Topline/coat/tail/limb structure details.
-
-MANDATORY: Fill all 'traits' and 'careGuide' fields with comprehensive expert-level data.
 
 Photo: {{media url=photoDataUri}}`,
 });
