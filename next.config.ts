@@ -29,14 +29,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // In Next.js 15, allowedDevOrigins should be handled carefully. 
-  // If causing errors in experimental, we ensure it matches the latest schema.
-  experimental: {
-    allowedDevOrigins: [
-      '*.cloudworkstations.dev',
-      'localhost:9002'
-    ]
-  }
 };
 
 export default nextConfig;

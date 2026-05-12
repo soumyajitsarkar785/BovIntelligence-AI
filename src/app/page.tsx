@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -121,9 +120,9 @@ export default function BreedClassifierApp() {
     } catch (error: any) {
       const isQuotaError = error.message?.includes('429');
       toast({
-        title: isQuotaError ? "System Busy" : "Scan Error",
+        title: isQuotaError ? "API Quota Reached" : "Scan Error",
         description: isQuotaError 
-          ? "AI model limit reached. Please wait 60 seconds." 
+          ? "The AI model is currently busy due to free-tier limits. Please wait 60 seconds and try again." 
           : "An error occurred during scanning. Please try again.",
         variant: isQuotaError ? "default" : "destructive"
       });
@@ -177,7 +176,7 @@ export default function BreedClassifierApp() {
         ) : activeTab === 'ledger' ? (
           <div className="space-y-6 animate-in slide-in-from-bottom-5">
             <div className="px-2">
-              <h2 className="text-2xl font-headline font-bold">Local Vault</h2>
+              <h2 className="text-2xl font-headline font-bold">Vault</h2>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{history.length} Saved Records</p>
             </div>
             <ScanLedger history={history} onSelect={(e) => {setPhoto(e.photoDataUri); setResult(e);}} onDelete={handleDeleteEntry} />
@@ -211,7 +210,7 @@ export default function BreedClassifierApp() {
                 <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
                   <TrendingUp className="h-5 w-5 text-blue-500" />
                 </div>
-                <h4 className="font-bold text-[9px] uppercase tracking-wider">Archive</h4>
+                <h4 className="font-bold text-[9px] uppercase tracking-wider">Vault</h4>
               </div>
             </div>
 
