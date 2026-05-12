@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ScanEntry } from '@/lib/storage';

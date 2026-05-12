@@ -147,7 +147,7 @@ Note: ${result.diagnosticNote}
 
           <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white space-y-4 print:border print:shadow-none">
              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-bold uppercase text-slate-400">Genomic Markers</span>
+                <span className="text-[9px] font-bold uppercase text-slate-400">Markers Detected</span>
                 <Badge variant="outline" className="text-[8px]">{markers.length} Points</Badge>
              </div>
              <div className="flex flex-wrap gap-2">

@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
-    // Ensuring no invalid experimental keys are present that cause server start issues
+    // Ensuring only stable or required experimental features are used
   }
 };
 
