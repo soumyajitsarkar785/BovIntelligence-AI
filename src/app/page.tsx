@@ -148,7 +148,7 @@ export default function BovindexPro() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f1f3f6] text-slate-900 flex flex-col font-body">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col font-body">
       <Toaster />
       
       {/* Sidebar Nav */}
@@ -177,7 +177,7 @@ export default function BovindexPro() {
 
       {/* Main Content Area */}
       <div className="flex-1 xl:ml-24">
-        <header className="h-24 bg-white/60 backdrop-blur-2xl border-b sticky top-0 z-50 px-10 flex items-center justify-between">
+        <header className="h-24 bg-white/70 backdrop-blur-2xl border-b sticky top-0 z-50 px-10 flex items-center justify-between">
           <div className="flex items-center gap-5">
             <div className="xl:hidden h-12 w-12 bg-[#0a192f] rounded-xl flex items-center justify-center text-accent">
               <Cpu className="h-6 w-6" />
@@ -192,7 +192,7 @@ export default function BovindexPro() {
           </div>
 
           <div className="flex items-center gap-6">
-            <div className="hidden md:flex bg-slate-200/50 rounded-full px-5 py-2.5 items-center gap-3 border border-slate-200">
+            <div className="hidden md:flex bg-slate-100 rounded-full px-5 py-2.5 items-center gap-3 border border-slate-200">
               <Search className="h-4 w-4 text-slate-400" />
               <input type="text" placeholder="Query database..." className="bg-transparent text-sm border-none focus:ring-0 w-48 font-medium" />
             </div>

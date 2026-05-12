@@ -58,7 +58,7 @@ export function AnalysisView({ result }: AnalysisViewProps) {
       </div>
 
       <Tabs defaultValue="summary" className="w-full">
-        <TabsList className="bg-slate-200/50 p-2 rounded-[2rem] border border-slate-200 shadow-inner h-20 w-full md:w-auto flex overflow-x-auto gap-2">
+        <TabsList className="bg-slate-100 p-2 rounded-[2rem] border border-slate-200 shadow-inner h-20 w-full md:w-auto flex overflow-x-auto gap-2">
           <TabsTrigger value="summary" className="rounded-2xl px-12 data-[state=active]:bg-[#0a192f] data-[state=active]:text-white data-[state=active]:shadow-2xl font-bold h-full transition-all">Report Summary</TabsTrigger>
           <TabsTrigger value="traits" className="rounded-2xl px-12 data-[state=active]:bg-[#0a192f] data-[state=active]:text-white data-[state=active]:shadow-2xl font-bold h-full transition-all">Genomic Profile</TabsTrigger>
           <TabsTrigger value="care" className="rounded-2xl px-12 data-[state=active]:bg-[#0a192f] data-[state=active]:text-white data-[state=active]:shadow-2xl font-bold h-full transition-all">Care Protocol</TabsTrigger>
