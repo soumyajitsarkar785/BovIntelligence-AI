@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -80,6 +81,8 @@
 @media print {
   body {
     background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
   body::before {
     display: none !important;
@@ -87,26 +90,30 @@
   .print-hidden {
     display: none !important;
   }
-  .print-only {
-    display: block !important;
-  }
-  header, nav, .dropdown-menu, button, .tabs-list {
+  header, nav, footer, button, [role="menu"], .dropdown-menu {
     display: none !important;
-  }
-  @page {
-    margin: 1cm;
-    size: A4;
-  }
-  .analysis-card {
-    border: 1px solid #e2e8f0 !important;
-    box-shadow: none !important;
-    break-inside: avoid;
   }
   #printable-area {
     display: block !important;
     width: 100% !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 2cm !important;
+    background: white !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 9999 !important;
+  }
+  .analysis-card {
+    break-inside: avoid;
+    border: none !important;
+    box-shadow: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  @page {
+    margin: 0;
+    size: A4 portrait;
   }
 }
 
