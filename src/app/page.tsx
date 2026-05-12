@@ -9,12 +9,12 @@ import {
   History as HistoryIcon,
   Bell,
   ArrowLeft,
-  Search,
   Plus,
   Activity,
   ShieldCheck,
   Database,
-  ArrowRight
+  ArrowRight,
+  TrendingUp
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ import { Card } from '@/components/ui/card';
 import { analyzeBovine, BovineMasterOutput } from '@/ai/flows/bovine-master-flow';
 import { getHistory, saveScan, ScanEntry, deleteScan } from '@/lib/storage';
 
-export default function BovindexApp() {
+export default function BovIntelligenceApp() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -67,15 +67,15 @@ export default function BovindexApp() {
     setScanProgress(0);
     
     try {
-      setLoadingStep('Initializing Vision Engine...');
+      setLoadingStep('Initializing Vision...');
       setScanProgress(20);
       
       const analysis = await analyzeBovine({ photoDataUri: dataUri });
       
       if (!analysis.isBovine) {
         toast({
-          title: "Not a Bovine",
-          description: "Please upload a clear photo of cattle or buffalo.",
+          title: "Invalid Subject",
+          description: "Please provide a clear image of a bovine animal.",
           variant: "destructive"
         });
         setIsScanning(false);
@@ -83,11 +83,11 @@ export default function BovindexApp() {
         return;
       }
 
-      setScanProgress(70);
-      setLoadingStep('Analyzing Genomic Patterns...');
+      setScanProgress(60);
+      setLoadingStep('Mapping Genomics...');
 
       const entry: ScanEntry = {
-        id: `BX-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+        id: `BI-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
         timestamp: Date.now(),
         photoDataUri: dataUri,
         breedName: analysis.breedName,
@@ -108,8 +108,8 @@ export default function BovindexApp() {
     } catch (error: any) {
       const isQuotaError = error.message?.includes('429') || error.message?.includes('quota');
       toast({
-        title: isQuotaError ? "API Quota Reached" : "Analysis Error",
-        description: isQuotaError ? "Please wait a moment before trying again." : "An unexpected error occurred.",
+        title: isQuotaError ? "Service Busy" : "Processing Error",
+        description: isQuotaError ? "Quota exceeded. Please retry in 60 seconds." : "Operation failed.",
         variant: "destructive"
       });
       setIsScanning(false);
@@ -140,7 +140,7 @@ export default function BovindexApp() {
         ) : (
           <div className="flex flex-col">
             <span className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none mb-1">Intelligence</span>
-            <span className="font-headline font-bold text-2xl text-[#0F172A] leading-none">Bovindex Pro</span>
+            <span className="font-headline font-bold text-2xl text-[#0F172A] leading-none">BovIntelligence</span>
           </div>
         )}
         <div className="flex gap-2">
@@ -155,15 +155,14 @@ export default function BovindexApp() {
         {isScanning ? (
           <div className="h-[70vh] flex flex-col items-center justify-center space-y-12 px-6">
             <div className="relative w-full aspect-square rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white">
-              {photo && <Image src={photo} alt="Scanning" fill className="object-cover brightness-50" />}
+              {photo && <Image src={photo} alt="Processing" fill className="object-cover brightness-50" />}
               <ScanOverlay />
               <div className="scan-line" />
             </div>
             <div className="w-full space-y-4 text-center">
-              <p className="text-xs font-bold text-accent uppercase tracking-widest">{loadingStep}</p>
-              <div className="space-y-2">
+              <p className="text-[10px] font-bold text-accent uppercase tracking-widest">{loadingStep}</p>
+              <div className="px-10">
                 <Progress value={scanProgress} className="h-1.5 bg-slate-100" />
-                <span className="text-[10px] font-bold text-slate-400">{scanProgress}% COMPLETE</span>
               </div>
             </div>
           </div>
@@ -172,9 +171,9 @@ export default function BovindexApp() {
         ) : activeTab === 'ledger' ? (
           <div className="space-y-6 pb-6 animate-in fade-in slide-in-from-bottom-5">
             <div className="flex justify-between items-end px-2">
-              <h2 className="text-3xl font-headline font-bold text-[#0F172A]">Records</h2>
-              <Badge variant="outline" className="text-accent rounded-lg font-bold uppercase text-[10px] px-2 py-0.5 bg-accent/5">
-                {history.length} Saved
+              <h2 className="text-3xl font-headline font-bold text-[#0F172A]">Ledger</h2>
+              <Badge variant="outline" className="text-accent rounded-lg font-bold uppercase text-[10px] px-2 py-0.5 bg-accent/5 border-accent/10">
+                {history.length} Records
               </Badge>
             </div>
             <ScanLedger 
@@ -191,9 +190,9 @@ export default function BovindexApp() {
             <h2 className="text-3xl font-headline font-bold text-[#0F172A]">Platform</h2>
             <div className="space-y-3">
               {[
-                { label: 'Cloud Sync', icon: Zap, status: 'Active', color: 'text-yellow-500' },
-                { label: 'Neural Engine', icon: Activity, status: 'v4.0', color: 'text-accent' },
-                { label: 'Database', icon: Database, status: 'Encrypted', color: 'text-blue-500' },
+                { label: 'Cloud Sync', icon: Zap, status: 'Connected', color: 'text-yellow-500' },
+                { label: 'AI Core v2.5', icon: Activity, status: 'Active', color: 'text-accent' },
+                { label: 'Storage', icon: Database, status: 'Secure', color: 'text-blue-500' },
               ].map((item, i) => (
                 <div key={i} className="bg-white p-5 rounded-[2rem] border border-slate-100 flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -210,20 +209,16 @@ export default function BovindexApp() {
             <div className="px-2 space-y-4">
               <div className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full"></span>
-                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">System Online</span>
+                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Vision Online</span>
               </div>
               <h1 className="text-4xl font-headline font-bold text-[#0F172A] leading-tight">
-                Modern <br /><span className="text-accent">Bovine Intelligence</span>
+                Advanced <br /><span className="text-accent">Herd Intelligence</span>
               </h1>
 
               <Card className="p-6 rounded-[2.5rem] bg-[#0F172A] text-white border-none shadow-xl">
-                <div className="flex items-center gap-4 mb-6">
-                  <ShieldCheck className="h-6 w-6 text-accent" />
-                  <p className="text-sm font-bold">Secure Ledger Active</p>
-                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <p className="text-[9px] font-bold text-white/40 uppercase">Units</p>
+                    <p className="text-[9px] font-bold text-white/40 uppercase">Total Assets</p>
                     <p className="text-2xl font-bold">{history.length}</p>
                   </div>
                   <div className="space-y-1">
@@ -237,32 +232,30 @@ export default function BovindexApp() {
             <div className="px-2 grid grid-cols-2 gap-4">
               <div 
                 onClick={() => fileInputRef.current?.click()}
-                className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:border-accent/20 transition-all cursor-pointer"
+                className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center text-center hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center mb-3">
-                  <Search className="h-5 w-5 text-accent" />
+                  <Plus className="h-5 w-5 text-accent" />
                 </div>
-                <h4 className="font-bold text-sm text-[#0F172A]">AI Scan</h4>
-                <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">Start Vision</p>
+                <h4 className="font-bold text-sm text-[#0F172A]">New Scan</h4>
               </div>
               <div 
                 onClick={() => setActiveTab('ledger')}
-                className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:border-blue-500/20 transition-all cursor-pointer"
+                className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center text-center hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
-                  <Plus className="h-5 w-5 text-blue-500" />
+                  <TrendingUp className="h-5 w-5 text-blue-500" />
                 </div>
-                <h4 className="font-bold text-sm text-[#0F172A]">Manual</h4>
-                <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">Log Data</p>
+                <h4 className="font-bold text-sm text-[#0F172A]">Analytics</h4>
               </div>
             </div>
 
             {history.length > 0 && (
               <div className="space-y-4 px-2">
                  <div className="flex justify-between items-center px-2">
-                    <h3 className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Recent Archive</h3>
-                    <Button variant="link" onClick={() => setActiveTab('ledger')} className="text-accent font-bold text-[10px] uppercase p-0">
-                      View All <ArrowRight className="h-3 w-3 ml-1" />
+                    <h3 className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Recent Activity</h3>
+                    <Button variant="link" onClick={() => setActiveTab('ledger')} className="text-accent font-bold text-[10px] uppercase p-0 h-auto">
+                      View Ledger <ArrowRight className="h-3 w-3 ml-1" />
                     </Button>
                  </div>
                  <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
@@ -270,12 +263,12 @@ export default function BovindexApp() {
                       <div 
                         key={scan.id} 
                         onClick={() => { setPhoto(scan.photoDataUri); setResult(scan); }}
-                        className="min-w-[150px] aspect-[4/5] rounded-[2rem] overflow-hidden relative border-2 border-white shadow-lg flex-shrink-0"
+                        className="min-w-[150px] aspect-[4/5] rounded-[2rem] overflow-hidden relative border-2 border-white shadow-md flex-shrink-0"
                       >
                         <Image src={scan.photoDataUri} alt={scan.breedName} fill className="object-cover" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
-                          <span className="text-[10px] font-bold text-white/60 truncate uppercase">{scan.id}</span>
                           <span className="text-xs font-bold text-white truncate">{scan.breedName}</span>
+                          <span className="text-[8px] font-bold text-white/50 uppercase">{scan.id}</span>
                         </div>
                       </div>
                     ))}

@@ -3,8 +3,8 @@ import type {Metadata} from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Bovindex Pro | AI Bovine Intelligence Platform',
-  description: 'Professional cattle breed classification and genomic health management platform powered by AI.',
+  title: 'BovIntelligence AI | Professional Bovine Insights',
+  description: 'AI-driven cattle breed classification and genomic health management platform.',
 };
 
 export default function RootLayout({

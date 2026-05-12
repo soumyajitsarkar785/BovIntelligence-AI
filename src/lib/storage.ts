@@ -1,3 +1,4 @@
+
 'use client';
 
 export interface ScanEntry {
@@ -21,7 +22,7 @@ export interface ScanEntry {
   };
 }
 
-const STORAGE_KEY = 'bovindex_pro_ledger_v3_stable';
+const STORAGE_KEY = 'bovintelligence_vault_v1';
 
 export function saveScan(entry: ScanEntry) {
   if (typeof window === 'undefined') return;

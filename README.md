@@ -1,39 +1,34 @@
-# Bovindex Pro - AI Bovine Intelligence Platform
 
-This is a professional cattle breed classification and health management platform built with Next.js, Firebase, and Genkit.
+# BovIntelligence AI - Advanced Bovine Intelligence Platform
 
-## How to Run in VS Code
+BovIntelligence AI is a professional platform designed for cattle breed classification, genomic trait analysis, and health management using state-of-the-art Generative AI.
+
+## Quick Start
 
 1. **Install Dependencies**:
-   Open your terminal in VS Code and run:
    ```bash
    npm install
    ```
 
-2. **Setup Environment Variables**:
-   Create a `.env` file in the root directory and add your Gemini API Key:
+2. **Setup Environment**:
+   Create a `.env` file and add your API Key:
    ```env
-   GEMINI_API_KEY=your_actual_key_here
+   GEMINI_API_KEY=your_key
    ```
 
-3. **Run Development Server**:
+3. **Run Platform**:
    ```bash
    npm run dev
    ```
 
-4. **Access the App**:
-   Open your browser and navigate to `http://localhost:9002`.
+## Core Features
+- **Genomic Vision**: High-precision breed identification from images.
+- **Protocol Generation**: Automated nutrition and health care guides.
+- **Secure Ledger**: Local encrypted storage for herd records.
+- **Expert Systems**: Powered by Genkit and Gemini 2.5 Flash.
 
-## Tech Stack
-- **Framework**: Next.js 15 (App Router)
-- **Styling**: Tailwind CSS + ShadCN UI
-- **AI Engine**: Google Genkit + Gemini 2.5 Flash
+## Technical Stack
+- **Framework**: Next.js 15
+- **AI Engine**: Google Genkit
+- **UI System**: Tailwind CSS + ShadCN
 - **Icons**: Lucide React
-- **Animations**: Tailwind Animate + Custom Framer-like CSS
-
-## Features
-- Real-time vision classification for 300+ breeds.
-- Detailed genomic trait profiling.
-- Veterinary-grade nutrition and health protocols.
-- Persistent local ledger for herd management.
-- Mobile-first professional UI.
