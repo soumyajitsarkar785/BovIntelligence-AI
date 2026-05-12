@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -151,8 +152,8 @@ export default function BovindexApp() {
           </Button>
         ) : (
           <div className="flex flex-col">
-            <span className="text-[10px] font-black text-accent uppercase tracking-widest">Bovindex Pro</span>
-            <span className="font-headline font-bold text-2xl text-[#0F172A]">Dashboard</span>
+            <span className="text-[10px] font-black text-accent uppercase tracking-widest">Global Network</span>
+            <span className="font-headline font-bold text-2xl text-[#0F172A]">Bovindex Pro</span>
           </div>
         )}
         <div className="flex gap-2">
@@ -263,14 +264,14 @@ export default function BovindexApp() {
 
             {/* Quick Actions Grid */}
             <div className="grid grid-cols-2 gap-4 px-2">
-              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-50 shadow-sm transition-all active:scale-95">
+              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-50 shadow-sm transition-all active:scale-95 cursor-pointer">
                 <Search className="h-6 w-6 text-accent mb-3" />
                 <h4 className="font-bold text-sm text-[#0F172A]">AI Vision</h4>
                 <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Real-time scan</p>
               </div>
               <div 
                 onClick={() => setActiveTab('ledger')}
-                className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm transition-all active:scale-95"
+                className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm transition-all active:scale-95 cursor-pointer"
               >
                 <Plus className="h-6 w-6 text-blue-500 mb-3" />
                 <h4 className="font-bold text-sm text-[#0F172A]">Add Entry</h4>
@@ -293,7 +294,7 @@ export default function BovindexApp() {
                           setPhoto(scan.photoDataUri);
                           setResult(scan);
                         }}
-                        className="min-w-[150px] aspect-[4/5] rounded-[2.5rem] overflow-hidden relative border-2 border-white shadow-xl flex-shrink-0 group transition-all active:scale-95"
+                        className="min-w-[150px] aspect-[4/5] rounded-[2.5rem] overflow-hidden relative border-2 border-white shadow-xl flex-shrink-0 group transition-all active:scale-95 cursor-pointer"
                       >
                         <Image src={scan.photoDataUri} alt={scan.breedName} fill className="object-cover group-hover:scale-110 transition-transform duration-700" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-5">
@@ -352,4 +353,3 @@ export default function BovindexApp() {
     </div>
   );
 }
-
