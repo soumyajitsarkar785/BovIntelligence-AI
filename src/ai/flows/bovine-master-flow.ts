@@ -29,16 +29,16 @@ const BovineMasterOutputSchema = z.object({
   negative_constraints_check: z.string().describe("Expert reasoning on why it does NOT match similar breeds."),
   diagnostic_note: z.string().describe("Concise clinical summary for the diagnostic report."),
   traits: z.object({
-    origin: z.string().describe("Extremely detailed history and geographical origin. MUST be 10-12 full, academic-style sentences detailing historical context."),
-    milkYieldEstimates: z.string().describe("Comprehensive analysis of production metrics, quality, fat content, and lactation cycles. MUST be 10-12 professional sentences."),
-    environmentalAdaptability: z.string().describe("Analysis of ecological resilience, climate tolerance, and terrain adaptability. MUST be 10-12 descriptive sentences."),
-    temperament: z.string().describe("Ethological profile detailing behavioral characteristics and handling requirements. MUST be 10-12 detailed sentences."),
-    physicalCharacteristics: z.string().describe("Elite morphological standards including size, weight, coat texture, and conformation. MUST be 10-12 professional sentences."),
-    commonUses: z.string().describe("Strategic commercial and traditional utilization analysis. MUST be 10-12 detailed sentences."),
+    origin: z.string().describe("Extremely detailed history and geographical origin. MUST be at least 15-20 full, academic-style sentences detailing historical context and evolutionary lineage."),
+    milkYieldEstimates: z.string().describe("Comprehensive analysis of production metrics, quality, fat content, and lactation cycles. MUST be at least 15-20 professional sentences with scientific depth."),
+    environmentalAdaptability: z.string().describe("Analysis of ecological resilience, climate tolerance, and terrain adaptability. MUST be 15-20 descriptive sentences covering thermal stress and forage efficiency."),
+    temperament: z.string().describe("Ethological profile detailing behavioral characteristics and handling requirements. MUST be 15-20 detailed sentences using veterinary behavioral terminology."),
+    physicalCharacteristics: z.string().describe("Elite morphological standards including size, weight, coat texture, and conformation. MUST be 15-20 professional sentences on somatic features."),
+    commonUses: z.string().describe("Strategic commercial and traditional utilization analysis. MUST be 15-20 detailed sentences covering dual-purpose and specialized industrial applications."),
   }),
   careGuide: z.object({
-    nutritionTips: z.string().describe("Elite dietary management protocol including specific forage, supplements, and vitamins. MUST be 12-15 descriptive sentences."),
-    healthTips: z.string().describe("Elite clinical health management including disease prevention, vaccination, and daily care. MUST be 12-15 descriptive sentences."),
+    nutritionTips: z.string().describe("Elite dietary management protocol including specific forage, supplements, and vitamins. MUST be 20-25 descriptive sentences in clinical style."),
+    healthTips: z.string().describe("Elite clinical health management including disease prevention, vaccination, and daily care. MUST be 20-25 descriptive sentences in clinical style."),
   }),
 });
 
@@ -56,9 +56,9 @@ const bovineMasterPrompt = ai.definePrompt({
 
 STRICT INSTRUCTIONS:
 1. Provide EXTREMELY VERBOSE, ACADEMIC, and PROFESSIONAL paragraphs for every field.
-2. For all 'traits' sub-fields, write at least 10-12 full, complex sentences. NO BULLET POINTS.
-3. For all 'careGuide' sub-fields, write at least 12-15 full, professional sentences.
-4. Use veterinary and genetic terminology (e.g., phenotype, genotype, ethology, phenotypic markers, conformation).
+2. For all 'traits' sub-fields, write at least 15-20 full, complex sentences. NO BULLET POINTS.
+3. For all 'careGuide' sub-fields, write at least 20-25 full, professional sentences in a clinical tone.
+4. Use veterinary and genetic terminology (e.g., phenotype, genotype, ethology, phenotypic markers, conformation, somatic traits, thermoregulation).
 5. If the image is not a cattle or buffalo, set detected_status to "ERROR" and species_type to "INVALID".
 
 REPORT STRUCTURE:
@@ -68,7 +68,7 @@ REPORT STRUCTURE:
 * Elaborate on geographical evolution and genetic heritage.
 * Provide a comprehensive clinical management protocol.
 
-The goal is to produce a 2-page detailed professional PDF report.
+The goal is to produce a detailed multi-page professional PDF report similar to a high-end research laboratory diagnostic output.
 
 Photo: {{media url=photoDataUri}}`,
 });

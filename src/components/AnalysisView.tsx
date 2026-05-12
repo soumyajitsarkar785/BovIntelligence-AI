@@ -91,28 +91,31 @@ Summary: ${result.diagnosticNote}
     });
 
     try {
-      // Step 1: Prepare the element for high-quality capture
+      // Step 1: Force visibility for capture
       const originalStyle = element.style.cssText;
       element.style.display = 'block';
       element.style.position = 'fixed';
-      element.style.top = '0';
+      element.style.top = '-10000px'; // Off-screen but in DOM
       element.style.left = '0';
-      element.style.zIndex = '-9999';
-      element.style.width = '210mm'; // Standard A4 width
+      element.style.width = '210mm'; 
+      element.style.backgroundColor = 'white';
+      element.style.visibility = 'visible';
 
-      // Step 2: Capture with high scale for professional print quality
+      // Small delay to allow reflow
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const canvas = await html2canvas(element, {
-        scale: 2, // 2x DPI for crisp text
+        scale: 2.5, // High resolution
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
         windowWidth: 794, // 210mm at 96dpi
       });
 
-      // Restore original state immediately after capture
+      // Restore style
       element.style.cssText = originalStyle;
 
-      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF('p', 'mm', 'a4');
       
       const pdfWidth = Number(pdf.internal.pageSize.getWidth());
@@ -122,23 +125,23 @@ Summary: ${result.diagnosticNote}
       const imgHeight = canvas.height;
       const canvasHeightInPDF = (imgHeight * pdfWidth) / imgWidth;
 
-      // Validation to prevent jsPDF.scale errors
-      if (!isFinite(pdfWidth) || !isFinite(canvasHeightInPDF) || canvasHeightInPDF === 0) {
+      // Robust validation
+      if (!isFinite(pdfWidth) || !isFinite(canvasHeightInPDF) || canvasHeightInPDF <= 0) {
         throw new Error('Invalid dimensions calculated for PDF');
       }
 
       let heightLeft = canvasHeightInPDF;
       let position = 0;
 
-      // Page 1
-      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPDF);
+      // Add First Page
+      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPDF, undefined, 'FAST');
       heightLeft -= pdfHeight;
 
-      // Subsequent Pages (Pagination Logic)
+      // Subsequent Pages Logic
       while (heightLeft > 0) {
         position = heightLeft - canvasHeightInPDF;
         pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPDF);
+        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPDF, undefined, 'FAST');
         heightLeft -= pdfHeight;
       }
 
@@ -149,7 +152,7 @@ Summary: ${result.diagnosticNote}
       toast({ 
         variant: "destructive", 
         title: "Export Failure", 
-        description: "Encountered an error during high-fidelity rendering." 
+        description: error.message || "Encountered an error during high-fidelity rendering." 
       });
     } finally {
       setIsExporting(false);
@@ -161,83 +164,81 @@ Summary: ${result.diagnosticNote}
   return (
     <div className="space-y-6 pb-24 animate-in fade-in duration-700">
       
-      {/* ELITE PRODUCTION REPORT (OFF-SCREEN FOR PDF) */}
-      <div style={{ display: 'none' }}>
-        <div id="report-content" className="bg-white p-[15mm] space-y-8 text-slate-900 font-serif" style={{ width: '210mm', minHeight: '297mm' }}>
+      {/* ELITE PRODUCTION REPORT (FOR PDF CAPTURE) */}
+      <div id="report-content" className="bg-white p-[20mm] space-y-10 text-slate-900 hidden print:block" style={{ width: '210mm', minHeight: '297mm', fontFamily: 'serif' }}>
           
-          {/* Official Diagnostic Header */}
-          <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 bg-slate-900 rounded flex items-center justify-center">
-                <ShieldCheck className="h-8 w-8 text-white" />
+          {/* Header */}
+          <div className="flex justify-between items-start border-b-2 border-slate-900 pb-8">
+            <div className="flex items-center gap-5">
+              <div className="h-14 w-14 bg-slate-900 rounded-lg flex items-center justify-center">
+                <ShieldCheck className="h-10 w-10 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold uppercase tracking-tight">BovIntelligence AI</h1>
-                <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Global Genomics Diagnostic Division</p>
+                <h1 className="text-2xl font-bold uppercase tracking-tighter">BovIntelligence AI</h1>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Global Genomics Diagnostic Division</p>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">DIAGNOSTIC ID</p>
-              <p className="text-lg font-bold">#{result.id}</p>
-              <p className="text-[9px] text-slate-500 font-medium">{new Date(result.timestamp).toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">RECORD ID</p>
+              <p className="text-xl font-bold">#{result.id}</p>
+              <p className="text-[10px] text-slate-500 font-medium">{new Date(result.timestamp).toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
             </div>
           </div>
 
-          {/* Identification Section */}
-          <div className="flex gap-8 items-start p-6 bg-slate-50 rounded-lg border border-slate-100">
-            <div className="relative h-40 w-40 rounded-lg overflow-hidden shadow-md flex-shrink-0">
+          {/* Intro Section */}
+          <div className="flex gap-10 items-start p-8 bg-slate-50 rounded-2xl border border-slate-100">
+            <div className="relative h-48 w-48 rounded-2xl overflow-hidden shadow-xl flex-shrink-0 border-4 border-white">
               <img src={result.photoDataUri} alt={result.breedName} className="object-cover w-full h-full" />
             </div>
-            <div className="space-y-3">
-              <div className="inline-block bg-slate-900 text-white text-[7px] font-bold px-2 py-0.5 rounded uppercase">
-                {result.confidence} CONFIDENCE
+            <div className="space-y-4">
+              <div className="inline-block bg-slate-900 text-white text-[9px] font-bold px-3 py-1 rounded-full uppercase">
+                {result.confidence} CONFIDENCE PROTOCOL
               </div>
-              <h2 className="text-3xl font-bold text-slate-900">{result.breedName}</h2>
-              <p className="text-[11px] text-slate-600 leading-relaxed font-medium italic">
+              <h2 className="text-4xl font-bold text-slate-900">{result.breedName}</h2>
+              <p className="text-[13px] text-slate-600 leading-relaxed font-medium italic border-l-4 border-slate-200 pl-4">
                 "{result.diagnosticNote}"
               </p>
             </div>
           </div>
 
-          {/* Genomic Traits (Academic paragraphs) */}
-          <div className="space-y-6">
+          {/* Diagnostic Content */}
+          <div className="space-y-10">
             {[
-              { label: 'Origin & Genetic Heritage', value: traits.origin, icon: Microscope },
-              { label: 'Production Metrics', value: traits.milkYieldEstimates, icon: Activity },
-              { label: 'Adaptability & Resilience', value: traits.environmentalAdaptability, icon: Zap },
-              { label: 'Temperament Profile', value: traits.temperament, icon: HeartPulse },
-              { label: 'Morphological Standards', value: traits.physicalCharacteristics, icon: Scale }
+              { label: 'Origin & Historical Evolution', value: traits.origin, icon: Microscope },
+              { label: 'Genetic Production Potential', value: traits.milkYieldEstimates, icon: Activity },
+              { label: 'Climatic Resilience & Adaptability', value: traits.environmentalAdaptability, icon: Zap },
+              { label: 'Ethological Profile & Behavior', value: traits.temperament, icon: HeartPulse },
+              { label: 'Elite Morphological Standards', value: traits.physicalCharacteristics, icon: Scale }
             ].map((trait, i) => (
-              <div key={i} className="space-y-2" style={{ pageBreakInside: 'avoid' }}>
-                <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-800 border-b border-slate-100 pb-1 flex items-center gap-2">
-                  <trait.icon className="h-3 w-3" /> {trait.label}
+              <div key={i} className="space-y-4" style={{ pageBreakInside: 'avoid' }}>
+                <h3 className="text-[12px] font-bold uppercase tracking-widest text-slate-800 border-b-2 border-slate-100 pb-2 flex items-center gap-3">
+                  <trait.icon className="h-4 w-4 text-slate-400" /> {trait.label}
                 </h3>
-                <p className="text-[10.5px] text-slate-700 leading-relaxed text-justify">
+                <p className="text-[12px] text-slate-700 leading-relaxed text-justify">
                   {trait.value}
                 </p>
               </div>
             ))}
           </div>
 
-          {/* Management Protocols */}
-          <div className="pt-4 grid grid-cols-1 gap-6">
-            <div className="p-6 bg-slate-900 text-white rounded-lg" style={{ pageBreakInside: 'avoid' }}>
-               <h3 className="text-[9px] font-bold uppercase tracking-widest mb-3">Nutritional Optimization Protocol</h3>
-               <p className="text-[10px] text-slate-300 leading-relaxed">{result.careGuide?.nutritionTips}</p>
+          {/* Technical Care Protocols */}
+          <div className="pt-10 space-y-8">
+            <div className="p-8 bg-slate-900 text-white rounded-3xl" style={{ pageBreakInside: 'avoid' }}>
+               <h3 className="text-[11px] font-bold uppercase tracking-widest mb-4 border-b border-white/10 pb-2">Nutritional Optimization Protocol</h3>
+               <p className="text-[12px] text-slate-300 leading-relaxed text-justify">{result.careGuide?.nutritionTips}</p>
             </div>
-            <div className="p-6 bg-slate-50 border border-slate-100 rounded-lg" style={{ pageBreakInside: 'avoid' }}>
-               <h3 className="text-[9px] font-bold uppercase tracking-widest mb-3 text-slate-900">Clinical Health Maintenance</h3>
-               <p className="text-[10px] text-slate-600 leading-relaxed">{result.careGuide?.healthTips}</p>
+            <div className="p-8 bg-slate-50 border border-slate-200 rounded-3xl" style={{ pageBreakInside: 'avoid' }}>
+               <h3 className="text-[11px] font-bold uppercase tracking-widest mb-4 text-slate-900 border-b border-slate-200 pb-2">Clinical Health Maintenance</h3>
+               <p className="text-[12px] text-slate-600 leading-relaxed text-justify">{result.careGuide?.healthTips}</p>
             </div>
           </div>
 
-          {/* Confidential Footer */}
-          <div className="pt-8 text-center border-t border-slate-100 opacity-40">
-            <p className="text-[8px] text-slate-400 font-bold uppercase tracking-[0.4em]">
+          {/* Footer */}
+          <div className="pt-12 text-center border-t border-slate-100">
+            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.5em]">
               CONFIDENTIAL • BOVINTELLIGENCE AI GENOMIC VAULT
             </p>
           </div>
-        </div>
       </div>
       
       {/* Visual UI for Screen */}
