@@ -12,10 +12,20 @@ import {
   Share2,
   FileCheck,
   Microscope,
-  ChevronRight
+  ChevronRight,
+  Copy,
+  Printer,
+  FileJson,
+  MoreVertical
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface AnalysisViewProps {
   result: ScanEntry;
@@ -24,52 +34,104 @@ interface AnalysisViewProps {
 export function AnalysisView({ result }: AnalysisViewProps) {
   const { toast } = useToast();
 
-  const handleExport = () => {
+  const handleExportJSON = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `Breed_Report_${result.id}.json`);
+    downloadAnchorNode.setAttribute("download", `BovIntelligence_Report_${result.id}.json`);
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
-    toast({ title: "Data Exported", description: "Professional report saved." });
+    toast({ title: "JSON Exported", description: "Technical data saved successfully." });
   };
 
-  // Safe data access with fallbacks
+  const handleCopyText = () => {
+    const text = `
+BovIntelligence AI Report
+-------------------------
+Report ID: ${result.id}
+Breed: ${result.breedName}
+Confidence: ${result.confidence}
+Species: ${result.speciesType}
+
+Diagnostic Note:
+${result.diagnosticNote}
+
+Morphology:
+- Cranial: ${result.physiologicalAnalysis.cranial}
+- Thoracic: ${result.physiologicalAnalysis.thoracic}
+- Body: ${result.physiologicalAnalysis.body}
+
+Care Guide:
+- Nutrition: ${result.careGuide.nutritionTips}
+- Health: ${result.careGuide.healthTips}
+    `.trim();
+
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copied to Clipboard", description: "Report text ready to share." });
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  // Safe data access
   const markers = result.visualMarkers || [];
   const analysis = result.physiologicalAnalysis || { cranial: 'N/A', thoracic: 'N/A', body: 'N/A' };
 
   return (
-    <div className="space-y-6 pb-20 animate-in fade-in duration-500 px-2">
-      <div className="relative aspect-square rounded-[2.5rem] overflow-hidden shadow-xl border-4 border-white">
+    <div className="space-y-6 pb-20 animate-in fade-in duration-500 px-2 print:p-0">
+      {/* Top Banner - Hidden on Print */}
+      <div className="relative aspect-square rounded-[2.5rem] overflow-hidden shadow-xl border-4 border-white print:rounded-none print:border-none print:h-[300px]">
         <Image src={result.photoDataUri} alt={result.breedName} fill className="object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent flex flex-col justify-end p-6">
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent flex flex-col justify-end p-6 print:hidden">
           <Badge className="w-fit bg-accent text-white border-none px-3 py-1 rounded-full text-[8px] font-bold uppercase tracking-widest mb-2">
-            Precision: {result.confidence || 'N/A'}
+            Confidence: {result.confidence || 'N/A'}
           </Badge>
           <h2 className="text-2xl font-headline font-bold text-white leading-tight">{result.breedName}</h2>
           <div className="flex items-center gap-2 text-white/50 text-[9px] font-bold uppercase mt-1">
-             <FileCheck className="h-3 w-3" /> Report ID: {result.id}
+             <FileCheck className="h-3 w-3" /> ID: {result.id}
           </div>
         </div>
       </div>
 
-      <div className="flex gap-3">
-        <Button onClick={handleExport} className="flex-1 rounded-2xl h-12 bg-[#0F172A] text-white font-bold text-[9px] uppercase tracking-wider gap-2">
-          <Download className="h-4 w-4" /> Export Report
-        </Button>
+      {/* Action Buttons - Hidden on Print */}
+      <div className="flex gap-3 print:hidden">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="flex-1 rounded-2xl h-12 bg-[#0F172A] text-white font-bold text-[9px] uppercase tracking-wider gap-2">
+              <Download className="h-4 w-4" /> Export Report
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 bg-white/95 backdrop-blur-md border-slate-100 shadow-2xl">
+            <DropdownMenuItem onClick={handlePrint} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
+              <Printer className="h-4 w-4 text-slate-500" />
+              <span className="text-[10px] font-bold uppercase">Print / PDF</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleCopyText} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
+              <Copy className="h-4 w-4 text-slate-500" />
+              <span className="text-[10px] font-bold uppercase">Copy Text</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExportJSON} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
+              <FileJson className="h-4 w-4 text-slate-500" />
+              <span className="text-[10px] font-bold uppercase">Download JSON</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <Button variant="outline" className="h-12 w-12 rounded-2xl border-slate-100 bg-white flex items-center justify-center">
           <Share2 className="h-4 w-4 text-slate-700" />
         </Button>
       </div>
 
+      {/* Tabs / Content Section */}
       <Tabs defaultValue="diagnostics" className="w-full">
-        <TabsList className="bg-slate-100 p-1 rounded-2xl h-11 flex gap-1 mb-6">
+        <TabsList className="bg-slate-100 p-1 rounded-2xl h-11 flex gap-1 mb-6 print:hidden">
           <TabsTrigger value="diagnostics" className="flex-1 rounded-xl data-[state=active]:bg-white data-[state=active]:text-accent font-bold text-[8px] uppercase">
-            Diagnostics
+            Analysis
           </TabsTrigger>
           <TabsTrigger value="morphology" className="flex-1 rounded-xl data-[state=active]:bg-white data-[state=active]:text-accent font-bold text-[8px] uppercase">
-            Morphology
+            Structure
           </TabsTrigger>
           <TabsTrigger value="protocol" className="flex-1 rounded-xl data-[state=active]:bg-white data-[state=active]:text-accent font-bold text-[8px] uppercase">
             Protocol
@@ -77,19 +139,19 @@ export function AnalysisView({ result }: AnalysisViewProps) {
         </TabsList>
         
         <TabsContent value="diagnostics" className="space-y-4">
-          <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white">
+          <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white print:shadow-none print:border">
             <div className="flex items-center gap-2 text-slate-400 mb-3">
               <Microscope className="h-4 w-4 text-accent" />
-              <span className="text-[9px] font-bold uppercase">Expert Diagnostic Note</span>
+              <span className="text-[9px] font-bold uppercase">Diagnostic Note</span>
             </div>
             <p className="text-sm font-medium text-slate-700 leading-relaxed italic">
-              "{result.diagnosticNote || "No diagnostic details available for this record."}"
+              "{result.diagnosticNote || "No diagnostic details available."}"
             </p>
           </Card>
 
-          <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white space-y-4">
+          <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white space-y-4 print:shadow-none print:border">
              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-bold uppercase text-slate-400">Markers Detected</span>
+                <span className="text-[9px] font-bold uppercase text-slate-400">Genomic Markers</span>
                 <Badge variant="outline" className="text-[8px]">{markers.length} Points</Badge>
              </div>
              <div className="flex flex-wrap gap-2">
@@ -98,13 +160,13 @@ export function AnalysisView({ result }: AnalysisViewProps) {
                     {marker}
                   </Badge>
                 )) : (
-                  <span className="text-[10px] text-slate-400">No markers identified.</span>
+                  <span className="text-[10px] text-slate-400">Analysis pending...</span>
                 )}
              </div>
-             <div className="h-px bg-slate-50" />
+             <div className="h-px bg-slate-50 print:block" />
              <div className="space-y-1">
-                <span className="text-[9px] font-bold uppercase text-accent">Negative Constraints Check</span>
-                <p className="text-[10px] text-slate-500">{result.negativeConstraints || "N/A"}</p>
+                <span className="text-[9px] font-bold uppercase text-accent">Classification Logic</span>
+                <p className="text-[10px] text-slate-500 leading-relaxed">{result.negativeConstraints || "Standard veterinary reasoning applied."}</p>
              </div>
           </Card>
         </TabsContent>
@@ -112,11 +174,11 @@ export function AnalysisView({ result }: AnalysisViewProps) {
         <TabsContent value="morphology" className="space-y-4">
           <div className="grid gap-3">
              {[
-               { title: 'Cranial', data: analysis.cranial },
-               { title: 'Thoracic', data: analysis.thoracic },
+               { title: 'Cranial Morphology', data: analysis.cranial },
+               { title: 'Thoracic Morphology', data: analysis.thoracic },
                { title: 'Body Frame', data: analysis.body }
              ].map((item, idx) => (
-               <Card key={idx} className="rounded-[1.5rem] p-4 border-none shadow-sm bg-white flex gap-4">
+               <Card key={idx} className="rounded-[1.5rem] p-4 border-none shadow-sm bg-white flex gap-4 print:shadow-none print:border">
                   <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
                     <ChevronRight className="h-4 w-4 text-accent" />
                   </div>
@@ -130,7 +192,7 @@ export function AnalysisView({ result }: AnalysisViewProps) {
         </TabsContent>
 
         <TabsContent value="protocol" className="space-y-4">
-          <Card className="rounded-[2rem] p-5 bg-white shadow-sm border-none flex gap-4 items-start">
+          <Card className="rounded-[2rem] p-5 bg-white shadow-sm border-none flex gap-4 items-start print:shadow-none print:border">
              <div className="h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
                <Zap className="h-4 w-4 text-orange-500" />
              </div>
@@ -140,7 +202,7 @@ export function AnalysisView({ result }: AnalysisViewProps) {
              </div>
           </Card>
 
-          <Card className="rounded-[2rem] p-5 bg-white shadow-sm border-none flex gap-4 items-start">
+          <Card className="rounded-[2rem] p-5 bg-white shadow-sm border-none flex gap-4 items-start print:shadow-none print:border">
              <div className="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
                <HeartPulse className="h-4 w-4 text-red-500" />
              </div>
