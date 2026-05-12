@@ -17,7 +17,8 @@ import {
   FileText,
   Fingerprint,
   Activity,
-  History
+  History,
+  Activity as ActivityIcon
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
@@ -91,20 +92,12 @@ Summary: ${result.diagnosticNote}
     });
 
     try {
-      // Create a high-quality capture of the element
       const canvas = await html2canvas(element, {
-        scale: 3, // Increased scale for crisp production-level output
+        scale: 2, // High resolution capture
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
-        onclone: (clonedDoc) => {
-          const clonedElement = clonedDoc.getElementById('report-content');
-          if (clonedElement) {
-            clonedElement.style.display = 'block';
-            clonedElement.style.position = 'static';
-            clonedElement.style.width = '210mm'; // Force A4 width during capture
-          }
-        }
+        windowWidth: 794, // Standard A4 width in pixels at 96 DPI
       });
 
       const imgData = canvas.toDataURL('image/png', 1.0);
@@ -116,20 +109,23 @@ Summary: ${result.diagnosticNote}
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
       const ratio = pdfWidth / imgWidth;
-      const totalCanvasHeightInPDF = imgHeight * ratio;
+      const canvasHeightInPDF = imgHeight * ratio;
 
-      // Handle pagination properly for Burp Suite style multi-page reports
-      let heightLeft = totalCanvasHeightInPDF;
+      let heightLeft = canvasHeightInPDF;
       let position = 0;
+      let page = 1;
 
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, totalCanvasHeightInPDF);
+      // Add first page
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, canvasHeightInPDF);
       heightLeft -= pdfHeight;
 
-      while (heightLeft > 0) {
-        position = heightLeft - totalCanvasHeightInPDF;
+      // If content spans more than one page, add subsequent pages with offset
+      while (heightLeft >= 0) {
+        position = - (pdfHeight * page);
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, totalCanvasHeightInPDF);
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, canvasHeightInPDF);
         heightLeft -= pdfHeight;
+        page++;
       }
 
       pdf.save(`BovIntelligence_Report_${result.id}.pdf`);
@@ -147,113 +143,85 @@ Summary: ${result.diagnosticNote}
   };
 
   const traits = result.traits;
-  const analysis = result.physiologicalAnalysis;
 
   return (
     <div className="space-y-6 pb-24 animate-in fade-in duration-700">
       
-      {/* Hidden for screen, optimized for High-Resolution A4 PDF Capture (Production Grade) */}
-      <div id="report-content" className="bg-white p-[25mm] space-y-10 border-t-[12px] border-slate-900 text-slate-900 hidden print:block" style={{ width: '210mm', minHeight: '297mm' }}>
+      {/* Print-optimized layout (Hidden on screen) */}
+      <div id="report-content" className="bg-white p-[15mm] space-y-8 text-slate-900 hidden print:block" style={{ width: '210mm', backgroundColor: 'white' }}>
         
-        {/* Elite Header */}
-        <div className="flex justify-between items-start border-b-2 border-slate-100 pb-8">
-          <div className="space-y-2">
-             <div className="flex items-center gap-3 mb-2">
-                <div className="h-10 w-10 bg-slate-900 rounded-lg flex items-center justify-center">
-                  <Fingerprint className="h-6 w-6 text-white" />
-                </div>
-                <h1 className="text-2xl font-bold tracking-tight">BovIntelligence <span className="text-accent">AI</span></h1>
-             </div>
-             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">Genomic Visual Diagnostic Report</p>
+        {/* Header */}
+        <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-8">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 bg-slate-900 rounded flex items-center justify-center">
+              <Fingerprint className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold uppercase tracking-tight">BovIntelligence AI</h1>
+              <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Laboratory Genomics Division</p>
+            </div>
           </div>
           <div className="text-right">
-             <p className="text-[9px] font-bold text-slate-400 uppercase">Document Serial</p>
-             <p className="text-lg font-bold tracking-tighter">#{result.id}</p>
-             <p className="text-[10px] text-slate-400 mt-1 font-medium">{new Date(result.timestamp).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p className="text-[9px] font-bold text-slate-400 uppercase">Report Reference</p>
+            <p className="text-sm font-bold tracking-tight">#{result.id}</p>
+            <p className="text-[9px] text-slate-500 mt-1">{new Date(result.timestamp).toLocaleDateString()}</p>
           </div>
         </div>
 
-        {/* Diagnostic Identification Section */}
-        <div className="grid grid-cols-[1fr_2.5fr] gap-10 items-center bg-slate-50/50 p-8 rounded-3xl border border-slate-100">
-          <div className="relative aspect-square w-full rounded-2xl overflow-hidden shadow-md border border-slate-200">
+        {/* Primary Identification Box */}
+        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 grid grid-cols-[1fr_2fr] gap-8 items-center" style={{ breakInside: 'avoid' }}>
+          <div className="relative aspect-square rounded-xl overflow-hidden border border-slate-200">
             <Image src={result.photoDataUri} alt={result.breedName} fill className="object-cover" />
           </div>
-          <div className="space-y-4">
-            <div>
-              <p className="text-[9px] font-bold text-accent uppercase tracking-widest mb-2">Primary Identification</p>
-              <h2 className="text-3xl font-bold leading-none">{result.breedName}</h2>
-              <div className="mt-3 flex gap-3">
-                <Badge variant="outline" className="bg-white border-slate-200 text-[9px] font-bold uppercase py-1 px-3">
-                  Confidence: {result.confidence}
-                </Badge>
-                <Badge variant="outline" className="bg-white border-slate-200 text-[9px] font-bold uppercase py-1 px-3">
-                  Type: {result.speciesType}
-                </Badge>
+          <div className="space-y-3">
+            <Badge className="bg-slate-900 text-white text-[8px] uppercase">{result.confidence} Confidence</Badge>
+            <h2 className="text-2xl font-bold">{result.breedName}</h2>
+            <p className="text-[10px] text-slate-600 leading-relaxed italic border-l-2 border-slate-300 pl-3">
+              "{result.diagnosticNote}"
+            </p>
+          </div>
+        </div>
+
+        {/* Traits Sections */}
+        <div className="space-y-6">
+          {[
+            { label: 'Origin & Historical Context', value: traits.origin, icon: Microscope },
+            { label: 'Production & Milk Quality', value: traits.milkYieldEstimates, icon: ActivityIcon },
+            { label: 'Ecological Adaptability', value: traits.environmentalAdaptability, icon: Zap },
+            { label: 'Behavioral Profile', value: traits.temperament, icon: HeartPulse },
+            { label: 'Physical Standards', value: traits.physicalCharacteristics, icon: Scale }
+          ].map((trait, i) => (
+            <div key={i} className="space-y-2" style={{ breakInside: 'avoid' }}>
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-1">
+                <trait.icon className="h-3 w-3 text-slate-900" />
+                <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-800">{trait.label}</h3>
               </div>
-            </div>
-            <div className="pt-4 border-t border-slate-100">
-              <p className="text-[9px] font-bold text-slate-400 uppercase mb-2">Clinical Observation</p>
-              <p className="text-xs text-slate-600 leading-relaxed italic font-medium">
-                "{result.diagnosticNote}"
+              <p className="text-[11px] text-slate-600 leading-relaxed text-justify">
+                {trait.value}
               </p>
             </div>
+          ))}
+        </div>
+
+        {/* Management Protocol */}
+        <div className="grid gap-4 pt-4" style={{ breakInside: 'avoid' }}>
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+            <h3 className="text-[9px] font-bold uppercase mb-2 text-slate-900">Nutrition Protocol</h3>
+            <p className="text-[10px] text-slate-600 leading-relaxed">{result.careGuide?.nutritionTips}</p>
+          </div>
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+            <h3 className="text-[9px] font-bold uppercase mb-2 text-slate-900">Health Protocol</h3>
+            <p className="text-[10px] text-slate-600 leading-relaxed">{result.careGuide?.healthTips}</p>
           </div>
         </div>
 
-        {/* Core Analysis Grid */}
-        <div className="space-y-8">
-          <div className="flex items-center gap-3 border-b-2 border-slate-100 pb-3">
-            <Dna className="h-5 w-5 text-slate-900" />
-            <h3 className="text-xs font-bold uppercase tracking-widest">Genomic Profile Analysis</h3>
-          </div>
-          
-          <div className="grid gap-8">
-            {[
-              { label: 'Origin & Historical Genetic Heritage', value: traits.origin, icon: Microscope },
-              { label: 'Production Metrics & Milk Quality Analysis', value: traits.milkYieldEstimates, icon: Activity },
-              { label: 'Ecological Resilience & Environmental Adaptability', value: traits.environmentalAdaptability, icon: Zap },
-              { label: 'Behavioral Ethology & Temperament Profile', value: traits.temperament, icon: HeartPulse },
-              { label: 'Elite Morphological Conformation Standards', value: traits.physicalCharacteristics, icon: Scale }
-            ].map((trait, i) => (
-              <div key={i} className="space-y-2">
-                <div className="flex items-center gap-3">
-                   <trait.icon className="h-4 w-4 text-accent" />
-                   <h4 className="text-[10px] font-bold uppercase text-slate-800 tracking-wide">{trait.label}</h4>
-                </div>
-                <p className="text-[12px] text-slate-600 leading-relaxed text-justify pl-7 border-l-2 border-slate-50">
-                  {trait.value}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Elite Management Protocol */}
-        <div className="space-y-6 pt-6">
-          <div className="flex items-center gap-3 border-b-2 border-slate-100 pb-3">
-            <FileText className="h-5 w-5 text-slate-900" />
-            <h3 className="text-xs font-bold uppercase tracking-widest">Elite Management Protocols</h3>
-          </div>
-          <div className="grid gap-6">
-            <div className="p-6 bg-white rounded-2xl border border-slate-100 border-l-[6px] border-l-accent shadow-sm">
-               <h3 className="text-[10px] font-bold uppercase mb-3 tracking-wider">Nutritional Strategy</h3>
-               <p className="text-[12px] text-slate-600 leading-relaxed text-justify">{result.careGuide?.nutritionTips}</p>
-            </div>
-            <div className="p-6 bg-white rounded-2xl border border-slate-100 border-l-[6px] border-l-slate-900 shadow-sm">
-               <h3 className="text-[10px] font-bold uppercase mb-3 tracking-wider">Health & Bio-Security Protocol</h3>
-               <p className="text-[12px] text-slate-600 leading-relaxed text-justify">{result.careGuide?.healthTips}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Professional Footer */}
-        <div className="border-t-2 border-slate-100 pt-8 mt-12 text-center">
-           <p className="text-[9px] text-slate-300 font-bold uppercase tracking-[0.2em]">Official BovIntelligence AI Laboratory Diagnostics</p>
-           <p className="text-[8px] text-slate-300 mt-2 uppercase">Confidential Professional Document • Internal Serial: BI-SYS-{result.id}</p>
+        {/* Footer */}
+        <div className="pt-8 text-center border-t border-slate-100 mt-8">
+          <p className="text-[8px] text-slate-300 font-bold uppercase tracking-widest">Confidential Diagnostic Data • BovIntelligence AI</p>
         </div>
       </div>
       
-      {/* Visual Analysis Grid for Screen */}
+      {/* Screen View (Dashboard Style) */}
       <div className="space-y-6 px-2">
          <Card className="overflow-hidden rounded-[2.5rem] border-none shadow-2xl relative">
             <div className="relative aspect-video w-full">
@@ -290,12 +258,12 @@ Summary: ${result.diagnosticNote}
          </div>
       </div>
       
-      {/* Action Navigation */}
-      <div className="flex gap-3 px-2 print:hidden sticky bottom-24 z-50">
+      {/* Actions */}
+      <div className="flex gap-3 px-2 sticky bottom-24 z-50">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button disabled={isExporting} className="flex-1 rounded-[1.5rem] h-14 bg-slate-900 text-white font-bold text-[10px] uppercase tracking-widest gap-2 shadow-xl active:scale-95 transition-all">
-              <Download className="h-5 w-5" /> {isExporting ? 'Generating Report...' : 'Export Report'}
+              <Download className="h-5 w-5" /> {isExporting ? 'Generating...' : 'Export Report'}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-64 rounded-2xl p-2 bg-white/95 backdrop-blur-md border-slate-100 shadow-2xl">
@@ -306,16 +274,16 @@ Summary: ${result.diagnosticNote}
               <FileText className="h-4 w-4 text-accent" />
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold uppercase">Download Elite PDF</span>
-                <span className="text-[8px] text-slate-400 font-medium">Production-grade document</span>
+                <span className="text-[8px] text-slate-400 font-medium">Standard A4 Format</span>
               </div>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleCopyText} className="flex gap-3 py-4 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
               <Copy className="h-4 w-4 text-slate-500" />
-              <span className="text-[10px] font-bold uppercase">Copy Clinical Summary</span>
+              <span className="text-[10px] font-bold uppercase">Copy Summary</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleExportJSON} className="flex gap-3 py-4 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
               <FileJson className="h-4 w-4 text-slate-500" />
-              <span className="text-[10px] font-bold uppercase">Export Raw JSON</span>
+              <span className="text-[10px] font-bold uppercase">Export JSON</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
