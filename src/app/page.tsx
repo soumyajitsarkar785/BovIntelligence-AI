@@ -9,12 +9,11 @@ import {
   History as HistoryIcon,
   Bell,
   ArrowLeft,
-  Plus,
   Activity,
-  ShieldCheck,
-  Database,
+  Plus,
   ArrowRight,
-  TrendingUp
+  TrendingUp,
+  Cpu
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -67,15 +66,15 @@ export default function BovIntelligenceApp() {
     setScanProgress(0);
     
     try {
-      setLoadingStep('Initializing Vision...');
+      setLoadingStep('Initializing AI...');
       setScanProgress(20);
       
       const analysis = await analyzeBovine({ photoDataUri: dataUri });
       
       if (!analysis.isBovine) {
         toast({
-          title: "Invalid Subject",
-          description: "Please provide a clear image of a bovine animal.",
+          title: "Analysis Failed",
+          description: "Subject identified as non-bovine.",
           variant: "destructive"
         });
         setIsScanning(false);
@@ -108,8 +107,8 @@ export default function BovIntelligenceApp() {
     } catch (error: any) {
       const isQuotaError = error.message?.includes('429') || error.message?.includes('quota');
       toast({
-        title: isQuotaError ? "Service Busy" : "Processing Error",
-        description: isQuotaError ? "Quota exceeded. Please retry in 60 seconds." : "Operation failed.",
+        title: isQuotaError ? "Quota Limit Reached" : "Processing Error",
+        description: isQuotaError ? "Free tier exhausted. Retry in 60s." : "Analysis failed.",
         variant: "destructive"
       });
       setIsScanning(false);
@@ -129,26 +128,24 @@ export default function BovIntelligenceApp() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-body max-w-md mx-auto shadow-2xl relative overflow-hidden pb-28">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-body max-w-md mx-auto shadow-2xl relative overflow-hidden pb-24">
       <Toaster />
       
-      <header className="h-20 px-6 flex items-center justify-between sticky top-0 bg-white/90 backdrop-blur-2xl z-50 border-b border-slate-100">
+      <header className="h-16 px-6 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-xl z-50 border-b border-slate-100">
         {result || photo ? (
           <Button variant="ghost" size="icon" onClick={() => {setPhoto(null); setResult(null);}} className="rounded-full bg-slate-100">
             <ArrowLeft className="h-5 w-5 text-slate-700" />
           </Button>
         ) : (
           <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none mb-1">Intelligence</span>
-            <span className="font-headline font-bold text-2xl text-[#0F172A] leading-none">BovIntelligence</span>
+            <span className="text-[9px] font-bold text-accent uppercase tracking-widest leading-none mb-1">Intelligence</span>
+            <span className="font-headline font-bold text-xl text-[#0F172A] leading-none">BovIntelligence</span>
           </div>
         )}
-        <div className="flex gap-2">
-          <Button variant="ghost" size="icon" className="rounded-full bg-slate-50 relative group">
-            <Bell className="h-5 w-5 text-slate-500" />
-            <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-accent rounded-full border-2 border-white"></span>
-          </Button>
-        </div>
+        <Button variant="ghost" size="icon" className="rounded-full bg-slate-50 relative">
+          <Bell className="h-5 w-5 text-slate-500" />
+          <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 bg-accent rounded-full border border-white"></span>
+        </Button>
       </header>
 
       <main className="flex-1 overflow-y-auto px-4 pt-4">
@@ -169,12 +166,10 @@ export default function BovIntelligenceApp() {
         ) : result ? (
           <AnalysisView result={result} />
         ) : activeTab === 'ledger' ? (
-          <div className="space-y-6 pb-6 animate-in fade-in slide-in-from-bottom-5">
-            <div className="flex justify-between items-end px-2">
-              <h2 className="text-3xl font-headline font-bold text-[#0F172A]">Ledger</h2>
-              <Badge variant="outline" className="text-accent rounded-lg font-bold uppercase text-[10px] px-2 py-0.5 bg-accent/5 border-accent/10">
-                {history.length} Records
-              </Badge>
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5">
+            <div className="px-2">
+              <h2 className="text-2xl font-headline font-bold text-[#0F172A]">Ledger</h2>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{history.length} Records found</p>
             </div>
             <ScanLedger 
               history={history} 
@@ -187,75 +182,62 @@ export default function BovIntelligenceApp() {
           </div>
         ) : activeTab === 'settings' ? (
           <div className="p-4 space-y-6 animate-in fade-in slide-in-from-bottom-5">
-            <h2 className="text-3xl font-headline font-bold text-[#0F172A]">Platform</h2>
+            <h2 className="text-2xl font-headline font-bold text-[#0F172A]">Platform</h2>
             <div className="space-y-3">
               {[
-                { label: 'Cloud Sync', icon: Zap, status: 'Connected', color: 'text-yellow-500' },
-                { label: 'AI Core v2.5', icon: Activity, status: 'Active', color: 'text-accent' },
-                { label: 'Storage', icon: Database, status: 'Secure', color: 'text-blue-500' },
+                { label: 'Cloud Sync', icon: Zap, status: 'Active', color: 'text-yellow-500' },
+                { label: 'AI Core v2.5', icon: Cpu, status: 'Stable', color: 'text-accent' },
+                { label: 'Vision Protocol', icon: Activity, status: 'Online', color: 'text-emerald-500' },
               ].map((item, i) => (
                 <div key={i} className="bg-white p-5 rounded-[2rem] border border-slate-100 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <item.icon className={`h-5 w-5 ${item.color}`} />
                     <span className="font-bold text-sm text-slate-700">{item.label}</span>
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">{item.status}</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase">{item.status}</span>
                 </div>
               ))}
             </div>
           </div>
         ) : (
-          <div className="space-y-8 pb-10 animate-in fade-in">
-            <div className="px-2 space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full"></span>
-                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Vision Online</span>
-              </div>
-              <h1 className="text-4xl font-headline font-bold text-[#0F172A] leading-tight">
-                Advanced <br /><span className="text-accent">Herd Intelligence</span>
+          <div className="space-y-8 animate-in fade-in">
+            <div className="px-2 space-y-3">
+              <h1 className="text-3xl font-headline font-bold text-[#0F172A] leading-tight">
+                Advanced <span className="text-accent">Insights</span>
               </h1>
-
-              <Card className="p-6 rounded-[2.5rem] bg-[#0F172A] text-white border-none shadow-xl">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-bold text-white/40 uppercase">Total Assets</p>
-                    <p className="text-2xl font-bold">{history.length}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-bold text-white/40 uppercase">Precision</p>
-                    <p className="text-2xl font-bold">99.2%</p>
-                  </div>
+              
+              <Card className="p-5 rounded-[2.5rem] bg-[#0F172A] text-white border-none shadow-xl flex justify-between items-center">
+                <div className="space-y-1">
+                  <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Total Assets</p>
+                  <p className="text-xl font-bold">{history.length}</p>
+                </div>
+                <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center">
+                  <Activity className="h-5 w-5 text-accent" />
                 </div>
               </Card>
             </div>
 
             <div className="px-2 grid grid-cols-2 gap-4">
-              <div 
-                onClick={() => fileInputRef.current?.click()}
-                className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center text-center hover:bg-slate-50 transition-colors cursor-pointer"
-              >
+              <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center text-center">
                 <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center mb-3">
-                  <Plus className="h-5 w-5 text-accent" />
+                  <Cpu className="h-5 w-5 text-accent" />
                 </div>
-                <h4 className="font-bold text-sm text-[#0F172A]">New Scan</h4>
+                <h4 className="font-bold text-xs text-[#0F172A]">Neural Core</h4>
               </div>
-              <div 
-                onClick={() => setActiveTab('ledger')}
-                className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center text-center hover:bg-slate-50 transition-colors cursor-pointer"
-              >
+              <div onClick={() => setActiveTab('ledger')} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center text-center cursor-pointer">
                 <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
                   <TrendingUp className="h-5 w-5 text-blue-500" />
                 </div>
-                <h4 className="font-bold text-sm text-[#0F172A]">Analytics</h4>
+                <h4 className="font-bold text-xs text-[#0F172A]">Statistics</h4>
               </div>
             </div>
 
             {history.length > 0 && (
               <div className="space-y-4 px-2">
-                 <div className="flex justify-between items-center px-2">
-                    <h3 className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Recent Activity</h3>
-                    <Button variant="link" onClick={() => setActiveTab('ledger')} className="text-accent font-bold text-[10px] uppercase p-0 h-auto">
-                      View Ledger <ArrowRight className="h-3 w-3 ml-1" />
+                 <div className="flex justify-between items-center px-1">
+                    <h3 className="text-[10px] font-bold text-[#0F172A] uppercase tracking-widest">Neural Archives</h3>
+                    <Button variant="link" onClick={() => setActiveTab('ledger')} className="text-accent font-bold text-[9px] uppercase p-0 h-auto">
+                      View All <ArrowRight className="h-3 w-3 ml-1" />
                     </Button>
                  </div>
                  <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
@@ -263,12 +245,11 @@ export default function BovIntelligenceApp() {
                       <div 
                         key={scan.id} 
                         onClick={() => { setPhoto(scan.photoDataUri); setResult(scan); }}
-                        className="min-w-[150px] aspect-[4/5] rounded-[2rem] overflow-hidden relative border-2 border-white shadow-md flex-shrink-0"
+                        className="min-w-[140px] aspect-[4/5] rounded-[2rem] overflow-hidden relative border border-white shadow-md flex-shrink-0"
                       >
                         <Image src={scan.photoDataUri} alt={scan.breedName} fill className="object-cover" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
                           <span className="text-xs font-bold text-white truncate">{scan.breedName}</span>
-                          <span className="text-[8px] font-bold text-white/50 uppercase">{scan.id}</span>
                         </div>
                       </div>
                     ))}
@@ -279,22 +260,22 @@ export default function BovIntelligenceApp() {
         )}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/80 backdrop-blur-3xl border-t border-slate-100 h-24 px-10 flex items-center justify-between z-50 rounded-t-[3rem] shadow-xl">
+      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-2xl border-t border-slate-100 h-20 px-10 flex items-center justify-between z-50 rounded-t-[2.5rem] shadow-2xl">
         <Button 
           variant="ghost" 
           onClick={() => { setActiveTab('home'); setPhoto(null); setResult(null); }}
           className={`flex flex-col gap-1 h-auto p-0 ${activeTab === 'home' ? 'text-accent' : 'text-slate-300'}`}
         >
-          <LayoutDashboard className="h-6 w-6" />
-          <span className="text-[9px] font-bold uppercase">Home</span>
+          <LayoutDashboard className="h-5 w-5" />
+          <span className="text-[8px] font-bold uppercase">Home</span>
         </Button>
         
-        <div className="relative -top-10">
+        <div className="relative -top-8">
           <Button 
             onClick={() => fileInputRef.current?.click()}
-            className="h-16 w-16 rounded-full bg-accent hover:bg-accent/90 shadow-xl text-white flex items-center justify-center p-0 ring-8 ring-[#F8FAFC]"
+            className="h-14 w-14 rounded-full bg-accent hover:bg-accent/90 shadow-xl text-white flex items-center justify-center p-0 ring-4 ring-white"
           >
-            <Camera className="h-8 w-8" />
+            <Camera className="h-6 w-6" />
           </Button>
         </div>
 
@@ -303,8 +284,8 @@ export default function BovIntelligenceApp() {
           onClick={() => setActiveTab('ledger')}
           className={`flex flex-col gap-1 h-auto p-0 ${activeTab === 'ledger' ? 'text-accent' : 'text-slate-300'}`}
         >
-          <HistoryIcon className="h-6 w-6" />
-          <span className="text-[9px] font-bold uppercase">Vault</span>
+          <HistoryIcon className="h-5 w-5" />
+          <span className="text-[8px] font-bold uppercase">Vault</span>
         </Button>
       </nav>
 
