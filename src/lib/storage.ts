@@ -1,4 +1,3 @@
-
 'use client';
 
 export interface ScanEntry {
@@ -7,16 +6,27 @@ export interface ScanEntry {
   photoDataUri: string;
   breedName: string;
   confidence: 'High' | 'Medium' | 'Low';
-  traits: any;
-  careGuide: any;
+  traits: {
+    origin: string;
+    milkYieldEstimates: string;
+    environmentalAdaptability: string;
+    temperament: string;
+    physicalCharacteristics: string;
+    commonUses: string;
+    specialNotes?: string;
+  };
+  careGuide: {
+    nutritionTips: string;
+    healthTips: string;
+  };
 }
 
-const STORAGE_KEY = 'bovindex_pro_ledger_v2';
+const STORAGE_KEY = 'bovindex_pro_ledger_v3';
 
 export function saveScan(entry: ScanEntry) {
   if (typeof window === 'undefined') return;
   const history = getHistory();
-  const updated = [entry, ...history].slice(0, 100); // Increased capacity
+  const updated = [entry, ...history].slice(0, 100);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 }
 

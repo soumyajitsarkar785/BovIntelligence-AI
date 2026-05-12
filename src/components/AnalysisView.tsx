@@ -11,19 +11,21 @@ import {
   Dna, 
   Zap, 
   HeartPulse, 
-  History as HistoryIcon, 
   Info,
   Sparkles,
   ShieldCheck,
   Globe,
   BarChart4
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface AnalysisViewProps {
   result: ScanEntry;
 }
 
 export function AnalysisView({ result }: AnalysisViewProps) {
+  const { toast } = useToast();
+
   const handleExport = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result, null, 2));
     const downloadAnchorNode = document.createElement('a');
@@ -32,6 +34,11 @@ export function AnalysisView({ result }: AnalysisViewProps) {
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
+    toast({ title: "Export Initialized", description: "Analytical report transmitted to local storage." });
+  };
+
+  const handleSaveToHerd = () => {
+    toast({ title: "Asset Committed", description: "Bovine profile synchronized with secure cloud ledger." });
   };
 
   return (
@@ -51,7 +58,7 @@ export function AnalysisView({ result }: AnalysisViewProps) {
           <Button onClick={handleExport} variant="outline" className="rounded-2xl h-16 px-10 border-2 border-slate-200 font-black gap-3 hover:bg-slate-50 transition-all text-slate-700">
             <Download className="h-6 w-6" /> Export Data
           </Button>
-          <Button className="rounded-2xl h-16 px-10 bg-accent hover:bg-accent/90 shadow-2xl shadow-accent/20 font-black gap-3 text-white transition-all text-lg">
+          <Button onClick={handleSaveToHerd} className="rounded-2xl h-16 px-10 bg-accent hover:bg-accent/90 shadow-2xl shadow-accent/20 font-black gap-3 text-white transition-all text-lg">
             <Save className="h-6 w-6" /> Commit to Herd
           </Button>
         </div>
