@@ -28,16 +28,16 @@ const BovineMasterOutputSchema = z.object({
   negative_constraints_check: z.string().describe("Why it does NOT match similar breeds."),
   diagnostic_note: z.string().describe("Expert summary of the analysis."),
   traits: z.object({
-    origin: z.string(),
-    milkYieldEstimates: z.string(),
-    environmentalAdaptability: z.string(),
-    temperament: z.string(),
-    physicalCharacteristics: z.string(),
-    commonUses: z.string(),
+    origin: z.string().describe("Detailed history and geographical origin (3-4 sentences)."),
+    milkYieldEstimates: z.string().describe("Detailed milk yield estimates and quality (3-4 sentences)."),
+    environmentalAdaptability: z.string().describe("How the breed handles climate and terrain (3-4 sentences)."),
+    temperament: z.string().describe("Behavioral characteristics (3-4 sentences)."),
+    physicalCharacteristics: z.string().describe("Detailed conformational traits (3-4 sentences)."),
+    commonUses: z.string().describe("Primary and secondary uses (3-4 sentences)."),
   }),
   careGuide: z.object({
-    nutritionTips: z.string(),
-    healthTips: z.string(),
+    nutritionTips: z.string().describe("Specific feeding protocol for this breed (4-5 sentences)."),
+    healthTips: z.string().describe("Specific disease prevention and care (4-5 sentences)."),
   }),
 });
 
@@ -51,40 +51,23 @@ const bovineMasterPrompt = ai.definePrompt({
   name: 'bovineMasterPrompt',
   input: {schema: BovineMasterInputSchema},
   output: {schema: BovineMasterOutputSchema},
-  prompt: `ROLE: You are an elite Senior Livestock Geneticist and Veterinary Vision Analyst specializing in cattle and buffalo breed diagnostics using high-resolution morphological and phenotypic analysis.
+  prompt: `ROLE: You are an elite Senior Livestock Geneticist and Veterinary Vision Analyst specializing in cattle and buffalo breed diagnostics.
 
-STRICT PROTOCOL 1: IMAGE VALIDATION
-* Confirm whether the target is cattle (bovine) or buffalo (bubaline).
-* If not livestock, set detected_status to "ERROR" and primary_breed to "Non-livestock".
-* Validate visibility of: 1. Head/Ears, 2. Horns/Hump, 3. Dewlap/Neck, 4. Torso/Topline, 5. Tail/Coat Pattern.
-* If two or more critical markers are missing or obstructed, set detected_status to "ERROR" with "Insufficient visual data".
+STRICT PROTOCOL: PROVIDE EXTREMELY DETAILED AND VERBOSE ANALYSIS.
+For each trait and care tip, write at least 3 to 5 full sentences. Do not provide short or generic answers.
 
-STRICT PROTOCOL 2: STRUCTURED VETERINARY REASONING
-Analyze phenotypic markers:
-1. Cranial Morphology: Ear curvature, horn orientation, forehead profile.
-2. Thoracic Morphology: Hump prominence, dewlap fold density, neck musculature.
-3. Body Morphology: Topline shape, coat pigmentation, tail switch, limb structure.
+IMAGE VALIDATION:
+* Confirm species (Cattle/Buffalo).
+* If invalid, set status to ERROR.
 
-STRICT PROTOCOL 3: GEOGRAPHIC FILTERING
-Description/Context: {{{description}}}
-* Prioritize indigenous regional breeds if context is provided. Evaluate for crossbreed lineage (Bos indicus × Bos taurus).
+DIAGNOSTIC REASONING:
+1. Cranial: Detailed ear/horn/forehead analysis.
+2. Thoracic: Hump/dewlap/neck musculature details.
+3. Body: Topline/coat/tail/limb structure details.
 
-STRICT PROTOCOL 4: NEGATIVE CONSTRAINTS
-* Explain why the animal does NOT match the closest similar breed. Never guess missing traits.
+GEOGRAPHIC FILTERING: Context: {{{description}}}
 
-STRICT PROTOCOL 5: CONFIDENCE CALIBRATION
-* 90–100%: Strong alignment.
-* 70–89%: Probable match.
-* 40–69%: Mixed/Partial.
-* Below 40%: Unidentified.
-
-STRICT PROTOCOL 6: CROSSBREED DETECTION
-* Prioritize "Crossbreed" classification if both indicus and taurine traits are visible.
-
-STRICT PROTOCOL 7: IMAGE CONTEXT FILTERING
-* Focus only on the animal body. Ignore humans, ropes, or clutter.
-
-MANDATORY DATA: Also provide standard 'traits' and 'careGuide' fields as per schema.
+MANDATORY: Fill all 'traits' and 'careGuide' fields with comprehensive expert-level data.
 
 Photo: {{media url=photoDataUri}}`,
 });

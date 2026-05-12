@@ -1,4 +1,3 @@
-
 'use client';
 
 import { ScanEntry } from '@/lib/storage';
@@ -15,7 +14,9 @@ import {
   Copy,
   Printer,
   FileJson,
-  Fingerprint
+  Fingerprint,
+  Dna,
+  Scale
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
@@ -37,7 +38,7 @@ export function AnalysisView({ result }: AnalysisViewProps) {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `BovIntel_Report_${result.id}.json`);
+    downloadAnchorNode.setAttribute("download", `BovIntelligence_Report_${result.id}.json`);
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -51,15 +52,19 @@ BovIntelligence AI Diagnostic Report
 ID: ${result.id}
 Breed: ${result.breedName}
 Confidence: ${result.confidence}
-Note: ${result.diagnosticNote}
+Diagnosis: ${result.diagnosticNote}
+-------------------------
+Traits:
+- Origin: ${result.traits.origin}
+- Milk Yield: ${result.traits.milkYieldEstimates}
+- Temperament: ${result.traits.temperament}
     `.trim();
 
     navigator.clipboard.writeText(text);
     toast({ title: "Copied", description: "Report text copied." });
   };
 
-  const handlePrint = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handlePrint = () => {
     if (typeof window !== 'undefined') {
       window.print();
     }
@@ -67,6 +72,7 @@ Note: ${result.diagnosticNote}
 
   const markers = result.visualMarkers || [];
   const analysis = result.physiologicalAnalysis || { cranial: 'N/A', thoracic: 'N/A', body: 'N/A' };
+  const traits = result.traits;
 
   return (
     <div className="space-y-6 pb-20 animate-in fade-in duration-500 px-2" id="printable-area">
@@ -102,15 +108,15 @@ Note: ${result.diagnosticNote}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 bg-white/95 backdrop-blur-md border-slate-100 shadow-2xl">
-            <DropdownMenuItem onClick={handlePrint} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
+            <DropdownMenuItem onSelect={handlePrint} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
               <Printer className="h-4 w-4 text-slate-500" />
               <span className="text-[10px] font-bold uppercase">Print / Save PDF</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleCopyText} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
+            <DropdownMenuItem onSelect={handleCopyText} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
               <Copy className="h-4 w-4 text-slate-500" />
               <span className="text-[10px] font-bold uppercase">Copy Text</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleExportJSON} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
+            <DropdownMenuItem onSelect={handleExportJSON} className="flex gap-3 py-3 rounded-xl cursor-pointer hover:bg-slate-50">
               <FileJson className="h-4 w-4 text-slate-500" />
               <span className="text-[10px] font-bold uppercase">JSON Data</span>
             </DropdownMenuItem>
@@ -134,6 +140,27 @@ Note: ${result.diagnosticNote}
           </p>
         </Card>
 
+        {/* Genomic Traits Section - FIXED: Added this section back */}
+        <div className="space-y-4 pt-4">
+          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-2 flex items-center gap-2">
+            <Dna className="h-3 w-3 text-accent" /> Genomic Traits
+          </h3>
+          <div className="grid gap-3">
+            {[
+              { label: 'Origin & History', value: traits.origin },
+              { label: 'Yield Estimates', value: traits.milkYieldEstimates },
+              { label: 'Adaptability', value: traits.environmentalAdaptability },
+              { label: 'Temperament', value: traits.temperament },
+              { label: 'Uses', value: traits.commonUses }
+            ].map((trait, i) => (
+              <Card key={i} className="rounded-[1.5rem] p-4 border-none shadow-sm bg-white print:border analysis-card">
+                <h4 className="text-[8px] font-bold uppercase text-accent mb-1">{trait.label}</h4>
+                <p className="text-[11px] text-slate-600 leading-relaxed">{trait.value}</p>
+              </Card>
+            ))}
+          </div>
+        </div>
+
         <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white space-y-4 print:border print:shadow-none analysis-card">
            <div className="flex items-center justify-between">
               <span className="text-[9px] font-bold uppercase text-slate-400">Markers Detected</span>
@@ -149,7 +176,9 @@ Note: ${result.diagnosticNote}
         </Card>
 
         <div className="grid gap-3 pt-4 border-t print:border-none">
-           <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-2">Morphological Analysis</h3>
+           <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-2 flex items-center gap-2">
+             <Scale className="h-3 w-3 text-accent" /> Morphological Analysis
+           </h3>
            {[
              { title: 'Cranial Morphology', data: analysis.cranial },
              { title: 'Thoracic Morphology', data: analysis.thoracic },
