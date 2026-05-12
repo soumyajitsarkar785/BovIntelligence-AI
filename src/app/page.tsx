@@ -11,7 +11,10 @@ import {
   ArrowLeft,
   Search,
   Plus,
-  Info
+  Info,
+  Activity,
+  ShieldCheck,
+  Database
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -22,6 +25,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { ScanLedger } from '@/components/ScanLedger';
 import { AnalysisView } from '@/components/AnalysisView';
 import { ScanOverlay } from '@/components/ScanOverlay';
+import { Card } from '@/components/ui/card';
 
 import { analyzeBovine, BovineMasterOutput } from '@/ai/flows/bovine-master-flow';
 import { getHistory, saveScan, ScanEntry, deleteScan } from '@/lib/storage';
@@ -136,7 +140,7 @@ export default function BovindexApp() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-body max-w-md mx-auto shadow-2xl relative overflow-hidden pb-24">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-body max-w-md mx-auto shadow-2xl relative overflow-hidden pb-32">
       <Toaster />
       
       {/* Mobile Top Header */}
@@ -148,7 +152,7 @@ export default function BovindexApp() {
         ) : (
           <div className="flex flex-col">
             <span className="text-[10px] font-black text-accent uppercase tracking-widest">Bovindex Pro</span>
-            <span className="font-headline font-bold text-2xl text-[#0F172A]">Intelligence</span>
+            <span className="font-headline font-bold text-2xl text-[#0F172A]">Dashboard</span>
           </div>
         )}
         <div className="flex gap-2">
@@ -204,7 +208,7 @@ export default function BovindexApp() {
               {[
                 { label: 'Cloud Synchronisation', icon: Zap, status: 'Active' },
                 { label: 'Neural Core Update', icon: Info, status: 'v3.2' },
-                { label: 'Offline Database', icon: Settings, status: '4.2GB' },
+                { label: 'Offline Database', icon: Database, status: '4.2GB' },
               ].map((item, i) => (
                 <div key={i} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -220,45 +224,67 @@ export default function BovindexApp() {
           </div>
         ) : (
           <div className="space-y-8 pb-10">
-            <div className="px-2 space-y-2">
-              <Badge className="bg-accent/10 text-accent border-none px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em]">
-                System Ready
-              </Badge>
-              <h1 className="text-4xl font-headline font-bold text-[#0F172A] leading-tight">
-                Scan your <br /><span className="text-accent">Herd</span> with Precision.
-              </h1>
-            </div>
-
-            <div 
-              onClick={() => fileInputRef.current?.click()}
-              className="relative group cursor-pointer"
-            >
-              <div className="absolute inset-0 bg-accent/20 blur-[60px] rounded-full group-hover:bg-accent/30 transition-all"></div>
-              <div className="relative premium-card aspect-[4/3] flex flex-col items-center justify-center p-8 border-2 border-white bg-white/80 backdrop-blur-md shadow-2xl">
-                <div className="h-24 w-24 rounded-full bg-accent text-white flex items-center justify-center mb-6 shadow-xl shadow-accent/20 group-hover:scale-110 transition-transform">
-                  <Camera className="h-12 w-12" />
-                </div>
-                <p className="font-black text-[#0F172A] uppercase tracking-widest text-sm">Initiate Vision Scan</p>
-                <p className="text-[11px] text-slate-400 font-bold mt-2 italic">Supports High-Res Cattle Vision</p>
+            {/* System Status Hero */}
+            <div className="px-2 space-y-6">
+              <div className="space-y-2">
+                <Badge className="bg-accent/10 text-accent border-none px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em]">
+                  Neural Engine Active
+                </Badge>
+                <h1 className="text-4xl font-headline font-bold text-[#0F172A] leading-tight">
+                  Precision <br /><span className="text-accent">Herd Intelligence</span>
+                </h1>
               </div>
+
+              <Card className="p-6 rounded-[2.5rem] bg-[#0F172A] text-white border-none shadow-2xl relative overflow-hidden">
+                <div className="absolute right-0 top-0 p-6 opacity-10">
+                   <Activity className="h-24 w-24" />
+                </div>
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center">
+                    <ShieldCheck className="h-6 w-6 text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">System Integrity</p>
+                    <p className="text-sm font-bold">Stable & Encrypted</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white/5 rounded-2xl p-4">
+                    <p className="text-[9px] font-black text-white/40 uppercase mb-1">Total Scans</p>
+                    <p className="text-xl font-bold">{history.length}</p>
+                  </div>
+                  <div className="bg-white/5 rounded-2xl p-4">
+                    <p className="text-[9px] font-black text-white/40 uppercase mb-1">Accuracy Avg.</p>
+                    <p className="text-xl font-bold">98.4%</p>
+                  </div>
+                </div>
+              </Card>
             </div>
 
+            {/* Quick Actions Grid */}
             <div className="grid grid-cols-2 gap-4 px-2">
-              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-50 shadow-sm">
+              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-50 shadow-sm transition-all active:scale-95">
                 <Search className="h-6 w-6 text-accent mb-3" />
                 <h4 className="font-bold text-sm text-[#0F172A]">AI Vision</h4>
-                <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Real-time identification</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Real-time scan</p>
               </div>
-              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
+              <div 
+                onClick={() => setActiveTab('ledger')}
+                className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm transition-all active:scale-95"
+              >
                 <Plus className="h-6 w-6 text-blue-500 mb-3" />
-                <h4 className="font-bold text-sm text-[#0F172A]">Ledger</h4>
-                <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Automatic logging</p>
+                <h4 className="font-bold text-sm text-[#0F172A]">Add Entry</h4>
+                <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Manual logging</p>
               </div>
             </div>
 
+            {/* Recent Scans (Vault) */}
             {history.length > 0 && (
               <div className="space-y-4 px-2">
-                 <h3 className="text-lg font-black text-[#0F172A] uppercase tracking-wider">Quick Vault</h3>
+                 <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-black text-[#0F172A] uppercase tracking-wider">Recent Assets</h3>
+                    <Button variant="link" onClick={() => setActiveTab('ledger')} className="text-accent font-black text-[10px] uppercase tracking-widest p-0">View All</Button>
+                 </div>
                  <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
                     {history.slice(0, 5).map(scan => (
                       <div 
@@ -267,12 +293,12 @@ export default function BovindexApp() {
                           setPhoto(scan.photoDataUri);
                           setResult(scan);
                         }}
-                        className="min-w-[140px] aspect-[3/4] rounded-[2rem] overflow-hidden relative border-2 border-white shadow-xl flex-shrink-0 group"
+                        className="min-w-[150px] aspect-[4/5] rounded-[2.5rem] overflow-hidden relative border-2 border-white shadow-xl flex-shrink-0 group transition-all active:scale-95"
                       >
                         <Image src={scan.photoDataUri} alt={scan.breedName} fill className="object-cover group-hover:scale-110 transition-transform duration-700" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
-                          <span className="text-[10px] font-black text-white truncate uppercase tracking-widest">{scan.breedName}</span>
-                          <span className="text-[8px] text-white/60 font-bold">{new Date(scan.timestamp).toLocaleDateString()}</span>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-5">
+                          <span className="text-[10px] font-black text-white truncate uppercase tracking-widest mb-0.5">{scan.breedName}</span>
+                          <span className="text-[8px] text-white/50 font-bold uppercase">{scan.id}</span>
                         </div>
                       </div>
                     ))}
@@ -284,7 +310,7 @@ export default function BovindexApp() {
       </main>
 
       {/* Modern App Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-2xl border-t border-slate-100 h-24 px-10 flex items-center justify-between z-50 rounded-t-[3rem] shadow-[0_-20px_50px_rgba(0,0,0,0.08)]">
+      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-2xl border-t border-slate-100 h-24 px-10 flex items-center justify-between z-50 rounded-t-[3.5rem] shadow-[0_-20px_50px_rgba(0,0,0,0.08)]">
         <Button 
           variant="ghost" 
           onClick={() => {
@@ -300,7 +326,7 @@ export default function BovindexApp() {
         <div className="relative -top-10">
           <Button 
             onClick={() => fileInputRef.current?.click()}
-            className="h-20 w-20 rounded-full bg-accent hover:bg-accent/90 shadow-[0_20px_40px_rgba(251,113,133,0.3)] text-white flex items-center justify-center p-0 ring-[12px] ring-[#F8FAFC]"
+            className="h-20 w-20 rounded-full bg-accent hover:bg-accent/90 shadow-[0_20px_40px_rgba(251,113,133,0.3)] text-white flex items-center justify-center p-0 ring-[12px] ring-[#F8FAFC] transition-transform active:scale-90"
           >
             <Camera className="h-10 w-10" />
           </Button>
@@ -326,3 +352,4 @@ export default function BovindexApp() {
     </div>
   );
 }
+
