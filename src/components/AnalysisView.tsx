@@ -15,9 +15,7 @@ import {
   Scale,
   FileText,
   Fingerprint,
-  Activity,
-  History,
-  LayoutDashboard
+  Activity
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
@@ -91,21 +89,16 @@ Summary: ${result.diagnosticNote}
     });
 
     try {
-      // Use a smaller scale for stability if the report is very large, 
-      // but keep it high enough for professional quality.
       const canvas = await html2canvas(element, {
-        scale: 1.5, 
+        scale: 2, 
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
-        windowWidth: 800, // Fixed width for consistent A4 aspect ratio rendering
       });
 
-      // Using JPEG instead of PNG to avoid "Incomplete or corrupt PNG" errors 
-      // which often happen with large canvases in jsPDF.
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
       const pdf = new jsPDF('p', 'mm', 'a4');
+      
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
@@ -118,14 +111,15 @@ Summary: ${result.diagnosticNote}
       let position = 0;
 
       // Add first page
-      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPDF, undefined, 'FAST');
+      // Ensuring all arguments are valid numbers to avoid the .scale error
+      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPDF);
       heightLeft -= pdfHeight;
 
-      // If content spans more than one page, add subsequent pages
+      // If content spans more than one page, add subsequent pages with offset
       while (heightLeft > 0) {
-        position = heightLeft - canvasHeightInPDF; // Calculate exact overlap
+        position = heightLeft - canvasHeightInPDF;
         pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPDF, undefined, 'FAST');
+        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPDF);
         heightLeft -= pdfHeight;
       }
 
@@ -136,7 +130,7 @@ Summary: ${result.diagnosticNote}
       toast({ 
         variant: "destructive", 
         title: "Export Failure", 
-        description: error.message || "Encountered an error during high-fidelity rendering." 
+        description: "Encountered an error during high-fidelity rendering." 
       });
     } finally {
       setIsExporting(false);
