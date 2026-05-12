@@ -2,8 +2,8 @@
 'use client';
 
 /**
- * @fileOverview Local Database Ledger for Breed Classifier.
- * Uses persistent local storage to act as a proper backend without cloud dependencies.
+ * @fileOverview Local Database Ledger for BovIntelligence AI.
+ * Uses persistent local storage for stable data management without cloud dependencies.
  */
 
 export interface ScanEntry {
@@ -36,7 +36,7 @@ export interface ScanEntry {
   };
 }
 
-const STORAGE_KEY = 'breed_classifier_vault_v2';
+const STORAGE_KEY = 'bovintelligence_vault_v1';
 
 /**
  * Returns the current scan history from local storage.
@@ -67,7 +67,7 @@ export function saveScan(entry: Omit<ScanEntry, 'timestamp'>) {
   const updatedHistory = [newEntry, ...history];
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedHistory));
   
-  // Broadcast update to all components
+  // Broadcast update for multi-component syncing
   window.dispatchEvent(new CustomEvent('vault-update', { detail: updatedHistory }));
 }
 

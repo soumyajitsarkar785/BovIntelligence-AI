@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -77,15 +78,15 @@ export default function BreedClassifierApp() {
     setScanProgress(0);
     
     try {
-      setLoadingStep('Clinical Validation...');
+      setLoadingStep('Morphological Validation...');
       setScanProgress(20);
       
       const analysis = await analyzeBovine({ photoDataUri: dataUri });
       
       if (analysis.detected_status === "ERROR") {
         toast({
-          title: "Detection Failed",
-          description: analysis.diagnostic_note || "Insufficient data.",
+          title: "Diagnostic Failure",
+          description: analysis.diagnostic_note || "Insufficient visual data for professional diagnosis.",
           variant: "destructive"
         });
         setIsScanning(false);
@@ -94,10 +95,10 @@ export default function BreedClassifierApp() {
       }
 
       setScanProgress(70);
-      setLoadingStep('Genomic Profiling...');
+      setLoadingStep('Genomic Analysis...');
 
       const entry: Omit<ScanEntry, 'timestamp'> = {
-        id: `BC-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+        id: `BI-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
         photoDataUri: dataUri,
         breedName: analysis.primary_breed,
         confidence: analysis.confidence_score,
@@ -115,17 +116,17 @@ export default function BreedClassifierApp() {
         setScanProgress(100);
         saveScan(entry);
         setIsScanning(false);
-        toast({ title: "Scan Complete", description: "Result saved to elite vault." });
+        toast({ title: "Analysis Complete", description: "Record secured in elite vault." });
       }, 800);
 
     } catch (error: any) {
       const isQuotaError = error.message?.includes('429') || error.status === 429 || error.message?.includes('quota');
       
       toast({
-        title: isQuotaError ? "System Busy" : "Scan Error",
+        title: isQuotaError ? "System Busy" : "Diagnostic Error",
         description: isQuotaError 
-          ? "AI model limit reached. Please wait 60 seconds and try again." 
-          : "An error occurred during diagnostics. Please try again.",
+          ? "AI model limit reached. Please wait 60 seconds." 
+          : "An error occurred during morphological analysis.",
         variant: isQuotaError ? "default" : "destructive"
       });
       setIsScanning(false);
@@ -139,7 +140,7 @@ export default function BreedClassifierApp() {
       setResult(null);
       setPhoto(null);
     }
-    toast({ title: "Deleted", description: "Record removed from vault." });
+    toast({ title: "Record Purged", description: "Data removed from vault." });
   };
 
   return (
@@ -179,7 +180,7 @@ export default function BreedClassifierApp() {
           <div className="space-y-6 animate-in slide-in-from-bottom-5">
             <div className="px-2">
               <h2 className="text-2xl font-headline font-bold">Genomic Vault</h2>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{history.length} Saved Records</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{history.length} Professional Records</p>
             </div>
             <ScanLedger history={history} onSelect={(e) => {setPhoto(e.photoDataUri); setResult(e);}} onDelete={handleDeleteEntry} />
           </div>
@@ -195,8 +196,8 @@ export default function BreedClassifierApp() {
                    <Info className="h-24 w-24 text-white" />
                 </div>
                 <div className="space-y-1 z-10">
-                  <p className="text-[8px] font-bold text-white/40 uppercase tracking-widest">System Status</p>
-                  <p className="text-lg font-bold">Diagnostic Mode Ready</p>
+                  <p className="text-[8px] font-bold text-white/40 uppercase tracking-widest">System Readiness</p>
+                  <p className="text-lg font-bold">Diagnostics Active</p>
                 </div>
                 <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center z-10">
                   <Activity className="h-5 w-5 text-accent" />
@@ -215,7 +216,7 @@ export default function BreedClassifierApp() {
                 <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
                   <TrendingUp className="h-5 w-5 text-blue-500" />
                 </div>
-                <h4 className="font-bold text-[9px] uppercase tracking-wider">Vault Ledger</h4>
+                <h4 className="font-bold text-[9px] uppercase tracking-wider">Genomic Ledger</h4>
               </div>
             </div>
 
@@ -229,7 +230,7 @@ export default function BreedClassifierApp() {
                  </div>
                  <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
                     {history.slice(0, 5).map(scan => (
-                      <div key={scan.id} onClick={() => { setPhoto(scan.photoDataUri); setResult(scan); }} className="min-w-[140px] aspect-[3/4] rounded-[2.5rem] overflow-hidden relative shadow-lg group">
+                      <div key={scan.id} onClick={() => { setPhoto(scan.photoDataUri); setResult(scan); }} className="min-w-[140px] aspect-[3/4] rounded-[2.5rem] overflow-hidden relative shadow-lg group cursor-pointer">
                         <Image src={scan.photoDataUri} alt={scan.breedName} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
                           <span className="text-[10px] font-bold text-white truncate">{scan.breedName}</span>
@@ -246,7 +247,7 @@ export default function BreedClassifierApp() {
       <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-2xl border-t border-slate-100 h-20 px-12 flex items-center justify-between z-50 rounded-t-[2.5rem] print:hidden">
         <Button variant="ghost" onClick={() => { setActiveTab('home'); setPhoto(null); setResult(null); }} className={`flex flex-col gap-1 h-auto p-0 ${activeTab === 'home' ? 'text-accent' : 'text-slate-300'}`}>
           <LayoutDashboard className="h-5 w-5" />
-          <span className="text-[8px] font-bold uppercase">Dashboard</span>
+          <span className="text-[8px] font-bold uppercase">Home</span>
         </Button>
         
         <div className="relative -top-8">

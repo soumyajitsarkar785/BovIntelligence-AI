@@ -22,13 +22,14 @@ BovIntelligence AI is a professional platform designed for cattle breed classifi
    ```
 
 ## Core Features
-- **Genomic Vision**: High-precision breed identification from images.
-- **Protocol Generation**: Automated nutrition and health care guides.
-- **Secure Ledger**: Local encrypted storage for herd records.
-- **Expert Systems**: Powered by Genkit and Gemini 2.5 Flash.
+- **Genomic Vision**: High-precision breed identification from images using elite diagnostic protocols.
+- **Morphological Analysis**: Detailed analysis of cranial, thoracic, and body frame characteristics.
+- **Expert Protocol Generation**: Automated nutrition and health care guides tailored to identified breeds.
+- **Secure Ledger**: Persistent local vault for herd records without cloud dependency.
+- **Professional Export**: Export detailed reports as PDF, JSON, or copy to clipboard.
 
 ## Technical Stack
 - **Framework**: Next.js 15
-- **AI Engine**: Google Genkit
-- **UI System**: Tailwind CSS + ShadCN
+- **AI Engine**: Google Genkit + Gemini 2.5 Flash
+- **UI System**: Tailwind CSS + ShadCN UI
 - **Icons**: Lucide React
