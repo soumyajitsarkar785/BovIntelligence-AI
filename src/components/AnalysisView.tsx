@@ -16,7 +16,8 @@ import {
   Dna,
   Scale,
   FileText,
-  Fingerprint
+  Fingerprint,
+  Activity
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
