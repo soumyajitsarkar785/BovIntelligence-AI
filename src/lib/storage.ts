@@ -11,12 +11,12 @@ export interface ScanEntry {
   careGuide: any;
 }
 
-const STORAGE_KEY = 'bovindex_ledger';
+const STORAGE_KEY = 'bovindex_pro_ledger_v2';
 
 export function saveScan(entry: ScanEntry) {
   if (typeof window === 'undefined') return;
   const history = getHistory();
-  const updated = [entry, ...history].slice(0, 50); // Keep last 50
+  const updated = [entry, ...history].slice(0, 100); // Increased capacity
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 }
 
@@ -29,6 +29,13 @@ export function getHistory(): ScanEntry[] {
   } catch (e) {
     return [];
   }
+}
+
+export function deleteScan(id: string) {
+  if (typeof window === 'undefined') return;
+  const history = getHistory();
+  const updated = history.filter(item => item.id !== id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 }
 
 export function clearHistory() {
