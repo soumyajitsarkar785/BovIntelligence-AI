@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -12,7 +11,8 @@ import {
   Cpu,
   ArrowRight,
   TrendingUp,
-  Fingerprint
+  Fingerprint,
+  Info
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -115,16 +115,17 @@ export default function BreedClassifierApp() {
         setScanProgress(100);
         saveScan(entry);
         setIsScanning(false);
-        toast({ title: "Scan Complete", description: "Result saved to local vault." });
+        toast({ title: "Scan Complete", description: "Result saved to elite vault." });
       }, 800);
 
     } catch (error: any) {
-      const isQuotaError = error.message?.includes('429');
+      const isQuotaError = error.message?.includes('429') || error.status === 429 || error.message?.includes('quota');
+      
       toast({
-        title: isQuotaError ? "API Quota Reached" : "Scan Error",
+        title: isQuotaError ? "System Busy" : "Scan Error",
         description: isQuotaError 
-          ? "The AI model is currently busy due to free-tier limits. Please wait 60 seconds and try again." 
-          : "An error occurred during scanning. Please try again.",
+          ? "AI model limit reached. Please wait 60 seconds and try again." 
+          : "An error occurred during diagnostics. Please try again.",
         variant: isQuotaError ? "default" : "destructive"
       });
       setIsScanning(false);
@@ -138,7 +139,7 @@ export default function BreedClassifierApp() {
       setResult(null);
       setPhoto(null);
     }
-    toast({ title: "Deleted", description: "Record removed." });
+    toast({ title: "Deleted", description: "Record removed from vault." });
   };
 
   return (
@@ -166,7 +167,7 @@ export default function BreedClassifierApp() {
               <div className="scan-line" />
             </div>
             <div className="w-full text-center space-y-4">
-              <p className="text-[10px] font-bold text-accent uppercase tracking-widest">{loadingStep}</p>
+              <p className="text-[10px] font-bold text-accent uppercase tracking-widest animate-pulse">{loadingStep}</p>
               <div className="px-12">
                 <Progress value={scanProgress} className="h-1.5 bg-slate-200" />
               </div>
@@ -177,7 +178,7 @@ export default function BreedClassifierApp() {
         ) : activeTab === 'ledger' ? (
           <div className="space-y-6 animate-in slide-in-from-bottom-5">
             <div className="px-2">
-              <h2 className="text-2xl font-headline font-bold">Vault</h2>
+              <h2 className="text-2xl font-headline font-bold">Genomic Vault</h2>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{history.length} Saved Records</p>
             </div>
             <ScanLedger history={history} onSelect={(e) => {setPhoto(e.photoDataUri); setResult(e);}} onDelete={handleDeleteEntry} />
@@ -189,38 +190,41 @@ export default function BreedClassifierApp() {
                 BovIntelligence <span className="text-accent">AI</span>
               </h1>
               
-              <Card className="p-5 rounded-[2rem] bg-[#0F172A] text-white border-none shadow-xl flex justify-between items-center">
-                <div className="space-y-1">
-                  <p className="text-[8px] font-bold text-white/40 uppercase tracking-widest">System Status</p>
-                  <p className="text-lg font-bold">Ready to Scan</p>
+              <Card className="p-5 rounded-[2rem] bg-[#0F172A] text-white border-none shadow-xl flex justify-between items-center overflow-hidden relative group">
+                <div className="absolute -right-4 -top-4 opacity-10 group-hover:rotate-12 transition-transform">
+                   <Info className="h-24 w-24 text-white" />
                 </div>
-                <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center">
+                <div className="space-y-1 z-10">
+                  <p className="text-[8px] font-bold text-white/40 uppercase tracking-widest">System Status</p>
+                  <p className="text-lg font-bold">Diagnostic Mode Ready</p>
+                </div>
+                <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center z-10">
                   <Activity className="h-5 w-5 text-accent" />
                 </div>
               </Card>
             </div>
 
             <div className="px-2 grid grid-cols-2 gap-4">
-              <div className="bg-white/70 backdrop-blur-md p-6 rounded-[2.5rem] border border-white shadow-sm flex flex-col items-center text-center">
+              <div className="bg-white/70 backdrop-blur-md p-6 rounded-[2.5rem] border border-white shadow-sm flex flex-col items-center text-center transition-transform active:scale-95">
                 <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center mb-3">
                   <Cpu className="h-5 w-5 text-accent" />
                 </div>
-                <h4 className="font-bold text-[9px] uppercase tracking-wider">Vision AI</h4>
+                <h4 className="font-bold text-[9px] uppercase tracking-wider">Vision Intelligence</h4>
               </div>
-              <div onClick={() => setActiveTab('ledger')} className="bg-white/70 backdrop-blur-md p-6 rounded-[2.5rem] border border-white shadow-sm flex flex-col items-center text-center cursor-pointer">
+              <div onClick={() => setActiveTab('ledger')} className="bg-white/70 backdrop-blur-md p-6 rounded-[2.5rem] border border-white shadow-sm flex flex-col items-center text-center cursor-pointer transition-transform active:scale-95">
                 <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
                   <TrendingUp className="h-5 w-5 text-blue-500" />
                 </div>
-                <h4 className="font-bold text-[9px] uppercase tracking-wider">Vault</h4>
+                <h4 className="font-bold text-[9px] uppercase tracking-wider">Vault Ledger</h4>
               </div>
             </div>
 
             {history.length > 0 && (
               <div className="space-y-4 px-2 pb-6">
                  <div className="flex justify-between items-center px-1">
-                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Recent Records</h3>
+                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Recent Analysis</h3>
                     <Button variant="link" onClick={() => setActiveTab('ledger')} className="text-accent font-bold text-[9px] uppercase p-0">
-                      View All <ArrowRight className="h-3 w-3 ml-1" />
+                      View Vault <ArrowRight className="h-3 w-3 ml-1" />
                     </Button>
                  </div>
                  <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
@@ -242,11 +246,11 @@ export default function BreedClassifierApp() {
       <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-2xl border-t border-slate-100 h-20 px-12 flex items-center justify-between z-50 rounded-t-[2.5rem] print:hidden">
         <Button variant="ghost" onClick={() => { setActiveTab('home'); setPhoto(null); setResult(null); }} className={`flex flex-col gap-1 h-auto p-0 ${activeTab === 'home' ? 'text-accent' : 'text-slate-300'}`}>
           <LayoutDashboard className="h-5 w-5" />
-          <span className="text-[8px] font-bold uppercase">Home</span>
+          <span className="text-[8px] font-bold uppercase">Dashboard</span>
         </Button>
         
         <div className="relative -top-8">
-          <Button onClick={() => fileInputRef.current?.click()} className="h-15 w-15 rounded-full bg-accent hover:bg-accent/90 shadow-2xl text-white ring-8 ring-white">
+          <Button onClick={() => fileInputRef.current?.click()} className="h-15 w-15 rounded-full bg-accent hover:bg-accent/90 shadow-2xl text-white ring-8 ring-white transition-all active:scale-90">
             <Camera className="h-7 w-7" />
           </Button>
         </div>
