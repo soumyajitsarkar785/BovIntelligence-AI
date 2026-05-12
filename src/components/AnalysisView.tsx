@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useState } from 'react';
 
-// Production level PDF libraries
+// Elite Production-Grade PDF Engine
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -89,37 +89,49 @@ Summary: ${result.diagnosticNote}
     });
 
     try {
+      // Create high-res canvas with specific production flags
       const canvas = await html2canvas(element, {
         scale: 2, 
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
       });
 
-      const imgData = canvas.toDataURL('image/jpeg', 1.0);
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL('image/jpeg', 0.98);
+      const pdf = new jsPDF({
+        orientation: 'p',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      });
       
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const pdfWidth = Number(pdf.internal.pageSize.getWidth());
+      const pdfHeight = Number(pdf.internal.pageSize.getHeight());
       
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
+      const imgWidth = Number(canvas.width);
+      const imgHeight = Number(canvas.height);
       const ratio = pdfWidth / imgWidth;
       const canvasHeightInPDF = imgHeight * ratio;
 
       let heightLeft = canvasHeightInPDF;
       let position = 0;
 
-      // Add first page
-      // Ensuring all arguments are valid numbers to avoid the .scale error
-      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPDF);
+      // Ensure all arguments are finite numbers to prevent jsPDF.scale error
+      if (isNaN(pdfWidth) || isNaN(canvasHeightInPDF) || imgWidth === 0) {
+        throw new Error('Calculated dimensions are invalid.');
+      }
+
+      // Add First Page
+      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPDF, undefined, 'FAST');
       heightLeft -= pdfHeight;
 
-      // If content spans more than one page, add subsequent pages with offset
+      // Handle Multi-page logic cleanly
       while (heightLeft > 0) {
         position = heightLeft - canvasHeightInPDF;
         pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPDF);
+        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPDF, undefined, 'FAST');
         heightLeft -= pdfHeight;
       }
 
@@ -130,7 +142,7 @@ Summary: ${result.diagnosticNote}
       toast({ 
         variant: "destructive", 
         title: "Export Failure", 
-        description: "Encountered an error during high-fidelity rendering." 
+        description: error.message || "Encountered an error during high-fidelity rendering." 
       });
     } finally {
       setIsExporting(false);
@@ -144,58 +156,58 @@ Summary: ${result.diagnosticNote}
       
       {/* Print-optimized layout (Elite Diagnostic Style) */}
       <div className="hidden">
-        <div id="report-content" className="bg-white p-[20mm] space-y-10 text-slate-900" style={{ width: '210mm', minHeight: '297mm' }}>
+        <div id="report-content" className="bg-white p-[15mm] space-y-8 text-slate-900" style={{ width: '210mm', minHeight: '297mm' }}>
           
           {/* Header */}
-          <div className="flex justify-between items-start border-b-4 border-slate-900 pb-8 mb-10">
-            <div className="flex items-center gap-4">
-              <div className="h-14 w-14 bg-slate-900 rounded-xl flex items-center justify-center">
-                <Fingerprint className="h-8 w-8 text-white" />
+          <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-8">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-slate-900 rounded-lg flex items-center justify-center">
+                <Fingerprint className="h-7 w-7 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-black uppercase tracking-tighter leading-none">BovIntelligence AI</h1>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] mt-1">Laboratory Genomics Division</p>
+                <h1 className="text-xl font-black uppercase tracking-tighter leading-none">BovIntelligence AI</h1>
+                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1">Livestock Genomics Diagnostic Laboratory</p>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Diagnostic Reference</p>
-              <p className="text-lg font-black tracking-tight text-slate-900">#{result.id}</p>
-              <p className="text-[10px] text-slate-500 font-medium mt-1">{new Date(result.timestamp).toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Diagnostic Reference</p>
+              <p className="text-md font-black tracking-tight text-slate-900">#{result.id}</p>
+              <p className="text-[9px] text-slate-500 font-medium mt-1">{new Date(result.timestamp).toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
             </div>
           </div>
 
           {/* Identification Section */}
-          <div className="grid grid-cols-[1fr_2fr] gap-10 items-center p-8 bg-slate-50 rounded-[2rem] border border-slate-100" style={{ breakInside: 'avoid' }}>
-            <div className="relative aspect-square rounded-2xl overflow-hidden shadow-xl border-4 border-white">
+          <div className="grid grid-cols-[1fr_2fr] gap-8 items-center p-6 bg-slate-50 rounded-2xl border border-slate-100" style={{ breakInside: 'avoid' }}>
+            <div className="relative aspect-square rounded-xl overflow-hidden shadow-md border-2 border-white">
               <Image src={result.photoDataUri} alt={result.breedName} fill className="object-cover" />
             </div>
-            <div className="space-y-4">
-              <Badge className="bg-slate-900 text-white text-[9px] uppercase px-3 py-1 font-black">
+            <div className="space-y-3">
+              <Badge className="bg-slate-900 text-white text-[8px] uppercase px-2 py-0.5 font-black">
                 {result.confidence} Genomic Confidence
               </Badge>
-              <h2 className="text-4xl font-black text-slate-900 tracking-tight">{result.breedName}</h2>
-              <div className="h-1 w-20 bg-accent rounded-full" />
-              <p className="text-xs text-slate-600 leading-relaxed font-medium italic">
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">{result.breedName}</h2>
+              <div className="h-1 w-12 bg-accent rounded-full" />
+              <p className="text-[11px] text-slate-600 leading-relaxed font-medium italic">
                 "{result.diagnosticNote}"
               </p>
             </div>
           </div>
 
           {/* Detailed Genomic Traits Analysis */}
-          <div className="space-y-10 pt-4">
+          <div className="space-y-6 pt-2">
             {[
               { label: 'Origin & Historical Genetic Heritage', value: traits.origin, icon: Microscope },
-              { label: 'Production Metrics & Yield Potential', value: traits.milkYieldEstimates, icon: Activity },
-              { label: 'Ecological Resilience & Adaptability', value: traits.environmentalAdaptability, icon: Zap },
-              { label: 'Behavioral Ethology & Profile', value: traits.temperament, icon: HeartPulse },
-              { label: 'Elite Morphological Standards', value: traits.physicalCharacteristics, icon: Scale }
+              { label: 'Production Metrics & Milk Quality Analysis', value: traits.milkYieldEstimates, icon: Activity },
+              { label: 'Ecological Resilience & Environmental Adaptability', value: traits.environmentalAdaptability, icon: Zap },
+              { label: 'Behavioral Ethology & Temperament Profile', value: traits.temperament, icon: HeartPulse },
+              { label: 'Elite Morphological Conformation Standards', value: traits.physicalCharacteristics, icon: Scale }
             ].map((trait, i) => (
-              <div key={i} className="space-y-3" style={{ breakInside: 'avoid' }}>
-                <div className="flex items-center gap-3 border-b-2 border-slate-100 pb-2">
-                  <trait.icon className="h-4 w-4 text-slate-900" />
-                  <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-800">{trait.label}</h3>
+              <div key={i} className="space-y-2" style={{ breakInside: 'avoid' }}>
+                <div className="flex items-center gap-2 border-b border-slate-100 pb-1.5">
+                  <trait.icon className="h-3.5 w-3.5 text-slate-900" />
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-800">{trait.label}</h3>
                 </div>
-                <p className="text-[13px] text-slate-600 leading-[1.8] text-justify font-normal">
+                <p className="text-[11.5px] text-slate-600 leading-[1.7] text-justify font-normal">
                   {trait.value}
                 </p>
               </div>
@@ -203,31 +215,31 @@ Summary: ${result.diagnosticNote}
           </div>
 
           {/* Management Protocols */}
-          <div className="grid grid-cols-2 gap-8 pt-8" style={{ breakInside: 'avoid' }}>
-            <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-4">
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
+          <div className="grid grid-cols-2 gap-6 pt-4" style={{ breakInside: 'avoid' }}>
+            <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
+              <h3 className="text-[9px] font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
                 <div className="h-1.5 w-1.5 bg-accent rounded-full" /> Nutrition Protocol
               </h3>
-              <p className="text-[12px] text-slate-600 leading-relaxed">{result.careGuide?.nutritionTips}</p>
+              <p className="text-[11px] text-slate-600 leading-relaxed">{result.careGuide?.nutritionTips}</p>
             </div>
-            <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-4">
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
+            <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
+              <h3 className="text-[9px] font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
                 <div className="h-1.5 w-1.5 bg-blue-500 rounded-full" /> Health Protocol
               </h3>
-              <p className="text-[12px] text-slate-600 leading-relaxed">{result.careGuide?.healthTips}</p>
+              <p className="text-[11px] text-slate-600 leading-relaxed">{result.careGuide?.healthTips}</p>
             </div>
           </div>
 
           {/* Footer */}
-          <div className="pt-12 text-center border-t border-slate-100 mt-12">
-            <p className="text-[9px] text-slate-300 font-black uppercase tracking-[0.5em]">
-              Confidential Genomic Diagnostic Data • Powered by BovIntelligence AI
+          <div className="pt-10 text-center border-t border-slate-100 mt-8">
+            <p className="text-[8px] text-slate-300 font-black uppercase tracking-[0.4em]">
+              Confidential Genomic Diagnostic Data • Burp-Class Secure Ledger
             </p>
           </div>
         </div>
       </div>
       
-      {/* Screen View (Dashboard Style) */}
+      {/* Visual Analysis Grid for Screen */}
       <div className="space-y-6 px-2">
          <Card className="overflow-hidden rounded-[2.5rem] border-none shadow-2xl relative">
             <div className="relative aspect-video w-full">
@@ -280,16 +292,16 @@ Summary: ${result.diagnosticNote}
               <FileText className="h-4 w-4 text-accent" />
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold uppercase">Download Elite PDF</span>
-                <span className="text-[8px] text-slate-400 font-medium">Standard A4 Format</span>
+                <span className="text-[8px] text-slate-400 font-medium">Professional A4 Report</span>
               </div>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleCopyText} className="flex gap-3 py-4 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
               <Copy className="h-4 w-4 text-slate-500" />
-              <span className="text-[10px] font-bold uppercase">Copy Summary</span>
+              <span className="text-[10px] font-bold uppercase">Copy Clinical Summary</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleExportJSON} className="flex gap-3 py-4 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
               <FileJson className="h-4 w-4 text-slate-500" />
-              <span className="text-[10px] font-bold uppercase">Export JSON</span>
+              <span className="text-[10px] font-bold uppercase">Export Raw Data (JSON)</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
