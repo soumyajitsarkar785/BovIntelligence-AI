@@ -1,5 +1,6 @@
 
 import type {NextConfig} from 'next';
+import path from 'path';
 
 const nextConfig: NextConfig = {
   typescript: {
@@ -9,7 +10,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   turbopack: {
-    root: '.',
+    root: path.resolve(__dirname),
   },
   images: {
     remotePatterns: [
