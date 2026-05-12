@@ -12,13 +12,12 @@ import {
   Microscope,
   Copy,
   FileJson,
-  Dna,
   Scale,
   FileText,
   Fingerprint,
   Activity,
   History,
-  Activity as ActivityIcon
+  LayoutDashboard
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
@@ -92,17 +91,21 @@ Summary: ${result.diagnosticNote}
     });
 
     try {
+      // Use a smaller scale for stability if the report is very large, 
+      // but keep it high enough for professional quality.
       const canvas = await html2canvas(element, {
-        scale: 2, // High resolution capture
+        scale: 1.5, 
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
-        windowWidth: 794, // Standard A4 width in pixels at 96 DPI
+        windowWidth: 800, // Fixed width for consistent A4 aspect ratio rendering
       });
 
-      const imgData = canvas.toDataURL('image/png', 1.0);
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      // Using JPEG instead of PNG to avoid "Incomplete or corrupt PNG" errors 
+      // which often happen with large canvases in jsPDF.
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
       
+      const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
@@ -113,29 +116,27 @@ Summary: ${result.diagnosticNote}
 
       let heightLeft = canvasHeightInPDF;
       let position = 0;
-      let page = 1;
 
       // Add first page
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, canvasHeightInPDF);
+      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPDF, undefined, 'FAST');
       heightLeft -= pdfHeight;
 
-      // If content spans more than one page, add subsequent pages with offset
-      while (heightLeft >= 0) {
-        position = - (pdfHeight * page);
+      // If content spans more than one page, add subsequent pages
+      while (heightLeft > 0) {
+        position = heightLeft - canvasHeightInPDF; // Calculate exact overlap
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, canvasHeightInPDF);
+        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPDF, undefined, 'FAST');
         heightLeft -= pdfHeight;
-        page++;
       }
 
       pdf.save(`BovIntelligence_Report_${result.id}.pdf`);
       toast({ title: "Report Downloaded", description: "Elite diagnostic documentation saved successfully." });
-    } catch (error) {
+    } catch (error: any) {
       console.error('PDF Generation Error:', error);
       toast({ 
         variant: "destructive", 
         title: "Export Failure", 
-        description: "Encountered an error during high-fidelity rendering." 
+        description: error.message || "Encountered an error during high-fidelity rendering." 
       });
     } finally {
       setIsExporting(false);
@@ -147,77 +148,88 @@ Summary: ${result.diagnosticNote}
   return (
     <div className="space-y-6 pb-24 animate-in fade-in duration-700">
       
-      {/* Print-optimized layout (Hidden on screen) */}
-      <div id="report-content" className="bg-white p-[15mm] space-y-8 text-slate-900 hidden print:block" style={{ width: '210mm', backgroundColor: 'white' }}>
-        
-        {/* Header */}
-        <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-8">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 bg-slate-900 rounded flex items-center justify-center">
-              <Fingerprint className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold uppercase tracking-tight">BovIntelligence AI</h1>
-              <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Laboratory Genomics Division</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-[9px] font-bold text-slate-400 uppercase">Report Reference</p>
-            <p className="text-sm font-bold tracking-tight">#{result.id}</p>
-            <p className="text-[9px] text-slate-500 mt-1">{new Date(result.timestamp).toLocaleDateString()}</p>
-          </div>
-        </div>
-
-        {/* Primary Identification Box */}
-        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 grid grid-cols-[1fr_2fr] gap-8 items-center" style={{ breakInside: 'avoid' }}>
-          <div className="relative aspect-square rounded-xl overflow-hidden border border-slate-200">
-            <Image src={result.photoDataUri} alt={result.breedName} fill className="object-cover" />
-          </div>
-          <div className="space-y-3">
-            <Badge className="bg-slate-900 text-white text-[8px] uppercase">{result.confidence} Confidence</Badge>
-            <h2 className="text-2xl font-bold">{result.breedName}</h2>
-            <p className="text-[10px] text-slate-600 leading-relaxed italic border-l-2 border-slate-300 pl-3">
-              "{result.diagnosticNote}"
-            </p>
-          </div>
-        </div>
-
-        {/* Traits Sections */}
-        <div className="space-y-6">
-          {[
-            { label: 'Origin & Historical Context', value: traits.origin, icon: Microscope },
-            { label: 'Production & Milk Quality', value: traits.milkYieldEstimates, icon: ActivityIcon },
-            { label: 'Ecological Adaptability', value: traits.environmentalAdaptability, icon: Zap },
-            { label: 'Behavioral Profile', value: traits.temperament, icon: HeartPulse },
-            { label: 'Physical Standards', value: traits.physicalCharacteristics, icon: Scale }
-          ].map((trait, i) => (
-            <div key={i} className="space-y-2" style={{ breakInside: 'avoid' }}>
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-1">
-                <trait.icon className="h-3 w-3 text-slate-900" />
-                <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-800">{trait.label}</h3>
+      {/* Print-optimized layout (Elite Diagnostic Style) */}
+      <div className="hidden">
+        <div id="report-content" className="bg-white p-[20mm] space-y-10 text-slate-900" style={{ width: '210mm', minHeight: '297mm' }}>
+          
+          {/* Header */}
+          <div className="flex justify-between items-start border-b-4 border-slate-900 pb-8 mb-10">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 bg-slate-900 rounded-xl flex items-center justify-center">
+                <Fingerprint className="h-8 w-8 text-white" />
               </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed text-justify">
-                {trait.value}
+              <div>
+                <h1 className="text-2xl font-black uppercase tracking-tighter leading-none">BovIntelligence AI</h1>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] mt-1">Laboratory Genomics Division</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Diagnostic Reference</p>
+              <p className="text-lg font-black tracking-tight text-slate-900">#{result.id}</p>
+              <p className="text-[10px] text-slate-500 font-medium mt-1">{new Date(result.timestamp).toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+            </div>
+          </div>
+
+          {/* Identification Section */}
+          <div className="grid grid-cols-[1fr_2fr] gap-10 items-center p-8 bg-slate-50 rounded-[2rem] border border-slate-100" style={{ breakInside: 'avoid' }}>
+            <div className="relative aspect-square rounded-2xl overflow-hidden shadow-xl border-4 border-white">
+              <Image src={result.photoDataUri} alt={result.breedName} fill className="object-cover" />
+            </div>
+            <div className="space-y-4">
+              <Badge className="bg-slate-900 text-white text-[9px] uppercase px-3 py-1 font-black">
+                {result.confidence} Genomic Confidence
+              </Badge>
+              <h2 className="text-4xl font-black text-slate-900 tracking-tight">{result.breedName}</h2>
+              <div className="h-1 w-20 bg-accent rounded-full" />
+              <p className="text-xs text-slate-600 leading-relaxed font-medium italic">
+                "{result.diagnosticNote}"
               </p>
             </div>
-          ))}
-        </div>
-
-        {/* Management Protocol */}
-        <div className="grid gap-4 pt-4" style={{ breakInside: 'avoid' }}>
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-            <h3 className="text-[9px] font-bold uppercase mb-2 text-slate-900">Nutrition Protocol</h3>
-            <p className="text-[10px] text-slate-600 leading-relaxed">{result.careGuide?.nutritionTips}</p>
           </div>
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-            <h3 className="text-[9px] font-bold uppercase mb-2 text-slate-900">Health Protocol</h3>
-            <p className="text-[10px] text-slate-600 leading-relaxed">{result.careGuide?.healthTips}</p>
-          </div>
-        </div>
 
-        {/* Footer */}
-        <div className="pt-8 text-center border-t border-slate-100 mt-8">
-          <p className="text-[8px] text-slate-300 font-bold uppercase tracking-widest">Confidential Diagnostic Data • BovIntelligence AI</p>
+          {/* Detailed Genomic Traits Analysis */}
+          <div className="space-y-10 pt-4">
+            {[
+              { label: 'Origin & Historical Genetic Heritage', value: traits.origin, icon: Microscope },
+              { label: 'Production Metrics & Yield Potential', value: traits.milkYieldEstimates, icon: Activity },
+              { label: 'Ecological Resilience & Adaptability', value: traits.environmentalAdaptability, icon: Zap },
+              { label: 'Behavioral Ethology & Profile', value: traits.temperament, icon: HeartPulse },
+              { label: 'Elite Morphological Standards', value: traits.physicalCharacteristics, icon: Scale }
+            ].map((trait, i) => (
+              <div key={i} className="space-y-3" style={{ breakInside: 'avoid' }}>
+                <div className="flex items-center gap-3 border-b-2 border-slate-100 pb-2">
+                  <trait.icon className="h-4 w-4 text-slate-900" />
+                  <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-800">{trait.label}</h3>
+                </div>
+                <p className="text-[13px] text-slate-600 leading-[1.8] text-justify font-normal">
+                  {trait.value}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Management Protocols */}
+          <div className="grid grid-cols-2 gap-8 pt-8" style={{ breakInside: 'avoid' }}>
+            <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-4">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
+                <div className="h-1.5 w-1.5 bg-accent rounded-full" /> Nutrition Protocol
+              </h3>
+              <p className="text-[12px] text-slate-600 leading-relaxed">{result.careGuide?.nutritionTips}</p>
+            </div>
+            <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-4">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
+                <div className="h-1.5 w-1.5 bg-blue-500 rounded-full" /> Health Protocol
+              </h3>
+              <p className="text-[12px] text-slate-600 leading-relaxed">{result.careGuide?.healthTips}</p>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="pt-12 text-center border-t border-slate-100 mt-12">
+            <p className="text-[9px] text-slate-300 font-black uppercase tracking-[0.5em]">
+              Confidential Genomic Diagnostic Data • Powered by BovIntelligence AI
+            </p>
+          </div>
         </div>
       </div>
       
