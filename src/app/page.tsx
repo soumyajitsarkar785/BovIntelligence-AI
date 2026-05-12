@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -32,8 +33,8 @@ const AppLogo = () => (
       <Fingerprint className="h-6 w-6 text-white" />
     </div>
     <div className="flex flex-col">
-      <span className="font-headline font-bold text-lg text-[#0F172A] leading-none">Breed</span>
-      <span className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none mt-0.5">Classifier</span>
+      <span className="font-headline font-bold text-lg text-[#0F172A] leading-none">BovIntelligence</span>
+      <span className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none mt-0.5">AI Platform</span>
     </div>
   </div>
 );
@@ -185,7 +186,7 @@ export default function BreedClassifierApp() {
           <div className="space-y-8 animate-in fade-in">
             <div className="px-2 space-y-4">
               <h1 className="text-3xl font-headline font-bold text-[#0F172A]">
-                Breed <span className="text-accent">Classifier</span>
+                BovIntelligence <span className="text-accent">AI</span>
               </h1>
               
               <Card className="p-5 rounded-[2rem] bg-[#0F172A] text-white border-none shadow-xl flex justify-between items-center">

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ScanEntry } from '@/lib/storage';
@@ -37,7 +38,7 @@ export function AnalysisView({ result }: AnalysisViewProps) {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `Breed_Report_${result.id}.json`);
+    downloadAnchorNode.setAttribute("download", `BovIntel_Report_${result.id}.json`);
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -46,7 +47,7 @@ export function AnalysisView({ result }: AnalysisViewProps) {
 
   const handleCopyText = () => {
     const text = `
-Breed Classifier Diagnostic Report
+BovIntelligence AI Diagnostic Report
 -------------------------
 ID: ${result.id}
 Breed: ${result.breedName}
@@ -71,7 +72,7 @@ Note: ${result.diagnosticNote}
       <div className="hidden print:flex justify-between items-center border-b pb-4 mb-4">
         <div className="flex items-center gap-2">
           <Fingerprint className="h-6 w-6 text-accent" />
-          <h1 className="text-xl font-headline font-bold">Breed Classifier Report</h1>
+          <h1 className="text-xl font-headline font-bold">BovIntelligence AI Report</h1>
         </div>
         <div className="text-right">
           <p className="text-[10px] font-bold text-slate-400">ID: {result.id}</p>
@@ -197,7 +198,7 @@ Note: ${result.diagnosticNote}
       </Tabs>
 
       <div className="hidden print:block text-center pt-8 mt-8 border-t text-[8px] text-slate-400 uppercase tracking-widest font-bold">
-        &copy; {new Date().getFullYear()} Breed Classifier AI Platform
+        &copy; {new Date().getFullYear()} BovIntelligence AI Platform
       </div>
     </div>
   );
