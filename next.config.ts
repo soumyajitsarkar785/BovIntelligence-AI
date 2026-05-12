@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
-    // Standard experimental features can go here if needed
+    // Ensuring no invalid keys like allowedDevOrigins are present
   }
 };
 
