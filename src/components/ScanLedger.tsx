@@ -16,68 +16,70 @@ interface ScanLedgerProps {
 export function ScanLedger({ history, onSelect, onDelete }: ScanLedgerProps) {
   if (history.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-10 md:py-20 text-center opacity-40">
-        <div className="h-16 w-16 md:h-24 md:w-24 bg-slate-100 rounded-2xl md:rounded-[2rem] flex items-center justify-center mb-4 md:mb-6">
-          <FileText className="h-8 w-8 md:h-12 md:w-12 text-slate-300" />
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="h-20 w-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mb-6 border border-slate-100">
+          <FileText className="h-10 w-10 text-slate-200" />
         </div>
-        <h4 className="font-bold text-slate-800 text-lg md:text-xl mb-1 md:mb-2">Vault Empty</h4>
-        <p className="text-xs md:text-sm text-slate-400 max-w-[200px] font-medium leading-relaxed">Transmitted data will be archived here.</p>
+        <h4 className="font-bold text-slate-800 text-xl mb-2">Vault is Empty</h4>
+        <p className="text-sm text-slate-400 max-w-[200px] font-medium leading-relaxed">Your cattle analysis history will appear here.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h3 className="text-xl md:text-2xl font-bold flex items-center gap-2 md:gap-3 text-[#0a192f]">
-          <History className="h-6 w-6 md:h-7 md:w-7 text-accent" />
-          Archive
+        <h3 className="text-2xl font-bold flex items-center gap-3 text-[#0F172A]">
+          <History className="h-7 w-7 text-accent" />
+          Recent Records
         </h3>
-        <span className="text-[9px] md:text-[11px] font-black bg-slate-100 px-2.5 py-1 rounded-lg text-slate-500 uppercase tracking-widest border border-slate-200">
+        <Badge className="bg-slate-100 text-slate-500 border-none px-3 py-1 rounded-lg text-[11px] font-black uppercase tracking-widest">
           {history.length} Units
-        </span>
+        </Badge>
       </div>
       
-      <ScrollArea className="h-[400px] md:h-[500px] -mx-4 md:-mx-6 px-4 md:px-6">
-        <div className="space-y-4 md:space-y-5">
+      <ScrollArea className="h-[450px] -mx-2 px-2">
+        <div className="space-y-4">
           {history.map((scan) => (
             <div
               key={scan.id}
-              className="group flex items-center gap-3 md:gap-5 p-3 md:p-4 rounded-xl md:rounded-[1.75rem] bg-slate-50 hover:bg-white cursor-pointer transition-all border border-transparent hover:border-slate-200 hover:shadow-xl hover:shadow-slate-100"
+              className="group flex items-center gap-4 p-4 rounded-[2rem] bg-white border border-slate-100 hover:border-accent/20 hover:shadow-2xl hover:shadow-slate-200/50 cursor-pointer transition-all duration-500"
               onClick={() => onSelect(scan)}
             >
-              <div className="relative h-14 w-14 md:h-20 md:w-20 rounded-lg md:rounded-[1.25rem] overflow-hidden bg-white shadow-sm flex-shrink-0 border border-slate-100 p-0.5">
-                <div className="h-full w-full rounded-[0.5rem] md:rounded-[1rem] overflow-hidden relative">
-                  <Image
-                    src={scan.photoDataUri}
-                    alt={scan.breedName}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                </div>
+              <div className="relative h-16 w-16 rounded-2xl overflow-hidden shadow-sm flex-shrink-0 border-2 border-white">
+                <Image
+                  src={scan.photoDataUri}
+                  alt={scan.breedName}
+                  fill
+                  className="object-cover group-hover:scale-110 transition-transform duration-700"
+                />
               </div>
-              <div className="flex-1 min-w-0 space-y-0.5 md:space-y-1">
-                <h4 className="font-bold text-base md:text-lg truncate text-[#0a192f] group-hover:text-accent transition-colors">{scan.breedName}</h4>
-                <div className="flex items-center gap-1.5 md:gap-2">
-                  <p className="text-[9px] md:text-[11px] font-black text-slate-400 uppercase tracking-tight">
-                    {formatDistanceToNow(scan.timestamp)}
+              <div className="flex-1 min-w-0">
+                <h4 className="font-bold text-lg truncate text-[#0F172A] mb-1 group-hover:text-accent transition-colors">{scan.breedName}</h4>
+                <div className="flex items-center gap-2">
+                   <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                    {formatDistanceToNow(scan.timestamp)} ago
                   </p>
                   <span className="h-1 w-1 bg-slate-200 rounded-full"></span>
-                  <span className="text-[9px] md:text-[11px] font-black text-emerald-600 uppercase tracking-tight">{scan.confidence}</span>
+                  <Badge variant="outline" className="h-5 px-2 text-[9px] font-black uppercase text-emerald-600 border-emerald-100 bg-emerald-50">
+                    {scan.confidence}
+                  </Badge>
                 </div>
               </div>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-destructive transition-all h-8 w-8 md:h-10 md:w-10 rounded-lg"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(scan.id);
-                }}
-              >
-                <Trash2 className="h-4 w-4 md:h-5 md:w-5" />
-              </Button>
-              <ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-slate-200 group-hover:text-accent group-hover:translate-x-1 transition-all" />
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-destructive transition-all h-10 w-10 rounded-full hover:bg-destructive/5"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(scan.id);
+                  }}
+                >
+                  <Trash2 className="h-5 w-5" />
+                </Button>
+                <ChevronRight className="h-5 w-5 text-slate-200 group-hover:text-accent group-hover:translate-x-1 transition-all" />
+              </div>
             </div>
           ))}
         </div>
