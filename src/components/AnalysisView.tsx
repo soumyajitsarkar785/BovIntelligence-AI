@@ -1,4 +1,3 @@
-
 'use client';
 
 import { ScanEntry } from '@/lib/storage';
@@ -67,7 +66,7 @@ Note: ${result.diagnosticNote}
   const analysis = result.physiologicalAnalysis || { cranial: 'N/A', thoracic: 'N/A', body: 'N/A' };
 
   return (
-    <div className="space-y-6 pb-20 animate-in fade-in duration-500 px-2 print:p-0 print:space-y-4">
+    <div className="space-y-6 pb-20 animate-in fade-in duration-500 px-2 print:p-0 print:space-y-4" id="printable-area">
       {/* Print-only Header */}
       <div className="hidden print:flex justify-between items-center border-b pb-4 mb-4">
         <div className="flex items-center gap-2">
@@ -135,7 +134,7 @@ Note: ${result.diagnosticNote}
         </TabsList>
         
         <TabsContent value="diagnostics" className="space-y-4">
-          <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white print:border print:shadow-none">
+          <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white print:border print:shadow-none analysis-card">
             <div className="flex items-center gap-2 text-slate-400 mb-3">
               <Microscope className="h-4 w-4 text-accent" />
               <span className="text-[9px] font-bold uppercase">Clinical Note</span>
@@ -145,7 +144,7 @@ Note: ${result.diagnosticNote}
             </p>
           </Card>
 
-          <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white space-y-4 print:border print:shadow-none">
+          <Card className="rounded-[2rem] p-5 border-none shadow-sm bg-white space-y-4 print:border print:shadow-none analysis-card">
              <div className="flex items-center justify-between">
                 <span className="text-[9px] font-bold uppercase text-slate-400">Markers Detected</span>
                 <Badge variant="outline" className="text-[8px]">{markers.length} Points</Badge>
@@ -160,14 +159,14 @@ Note: ${result.diagnosticNote}
           </Card>
         </TabsContent>
 
-        <TabsContent value="morphology" className="space-y-3 print:block">
+        <TabsContent value="morphology" className="space-y-3 print:block print:pt-4">
           <div className="grid gap-3">
              {[
                { title: 'Cranial Morphology', data: analysis.cranial },
                { title: 'Thoracic Morphology', data: analysis.thoracic },
                { title: 'Body Frame', data: analysis.body }
              ].map((item, idx) => (
-               <Card key={idx} className="rounded-[1.5rem] p-4 border-none shadow-sm bg-white flex gap-4 print:border">
+               <Card key={idx} className="rounded-[1.5rem] p-4 border-none shadow-sm bg-white flex gap-4 print:border analysis-card">
                   <ChevronRight className="h-4 w-4 text-accent shrink-0 mt-1 print:hidden" />
                   <div className="space-y-1">
                     <h4 className="text-[9px] font-bold uppercase text-slate-800">{item.title}</h4>
@@ -178,8 +177,8 @@ Note: ${result.diagnosticNote}
           </div>
         </TabsContent>
 
-        <TabsContent value="protocol" className="space-y-4 print:block">
-          <Card className="rounded-[2rem] p-5 bg-white shadow-sm border-none flex gap-4 items-start print:border">
+        <TabsContent value="protocol" className="space-y-4 print:block print:pt-4">
+          <Card className="rounded-[2rem] p-5 bg-white shadow-sm border-none flex gap-4 items-start print:border analysis-card">
              <Zap className="h-5 w-5 text-orange-500 shrink-0 print:hidden" />
              <div className="space-y-1">
                <h3 className="text-[9px] font-bold text-[#0F172A] uppercase">Nutrition</h3>
@@ -187,7 +186,7 @@ Note: ${result.diagnosticNote}
              </div>
           </Card>
 
-          <Card className="rounded-[2rem] p-5 bg-white shadow-sm border-none flex gap-4 items-start print:border">
+          <Card className="rounded-[2rem] p-5 bg-white shadow-sm border-none flex gap-4 items-start print:border analysis-card">
              <HeartPulse className="h-5 w-5 text-red-500 shrink-0 print:hidden" />
              <div className="space-y-1">
                <h3 className="text-[9px] font-bold text-[#0F172A] uppercase">Health</h3>

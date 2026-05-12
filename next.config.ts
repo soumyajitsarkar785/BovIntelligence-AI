@@ -1,4 +1,3 @@
-
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -31,7 +30,7 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
-    // Ensuring only stable or required experimental features are used
+    // Standard experimental features can go here if needed
   }
 };
 
