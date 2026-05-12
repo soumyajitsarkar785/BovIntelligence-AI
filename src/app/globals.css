@@ -23,7 +23,7 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222 47% 11%;
-    --radius: 1.5rem;
+    --radius: 1.25rem;
   }
 }
 
@@ -32,7 +32,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-[#F8FAFC] text-slate-900;
+    @apply bg-[#F1F5F9] text-slate-900 overflow-x-hidden;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   h1, h2, h3, h4, h5, h6 {
@@ -41,54 +41,46 @@
 }
 
 .scan-line {
-  animation: scan 3s ease-in-out infinite;
+  animation: scan 2.5s ease-in-out infinite;
   background: linear-gradient(to bottom, transparent, hsl(var(--accent) / 0.8), transparent);
-  height: 4px;
+  height: 6px;
   width: 100%;
   position: absolute;
+  top: 0;
   z-index: 30;
   box-shadow: 0 0 20px 2px hsl(var(--accent) / 0.5);
 }
 
 @keyframes scan {
-  0% { transform: translateY(0%); opacity: 0; }
-  15% { opacity: 1; }
-  85% { opacity: 1; }
-  100% { transform: translateY(100%); opacity: 0; }
+  0% { top: 0%; opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
 }
 
 .premium-card {
-  @apply bg-white rounded-[2.5rem] border border-slate-100 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] transition-all duration-500 hover:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.1)];
+  @apply bg-white rounded-[2rem] border border-slate-100 shadow-sm transition-all duration-300 active:scale-[0.98];
 }
 
 .glass-panel {
-  @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-xl;
+  @apply bg-white/80 backdrop-blur-xl border border-white/40 shadow-xl;
 }
 
-.shimmer-text {
-  background: linear-gradient(90deg, #64748b 0%, #0f172a 50%, #64748b 100%);
-  background-size: 200% auto;
-  color: transparent;
-  -webkit-background-clip: text;
-  background-clip: text;
-  animation: shine 3s linear infinite;
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-@keyframes shine {
-  to { background-position: 200% center; }
+/* App Transition */
+.page-enter {
+  animation: fadeIn 0.4s ease-out;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 10px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
+
