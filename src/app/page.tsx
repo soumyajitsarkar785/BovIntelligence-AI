@@ -1,11 +1,9 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { 
   Camera, 
   LayoutDashboard, 
-  Zap, 
   History as HistoryIcon,
   Bell,
   ArrowLeft,
@@ -34,8 +32,8 @@ const AppLogo = () => (
       <Fingerprint className="h-5 w-5 text-white" />
     </div>
     <div className="flex flex-col">
-      <span className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none mb-0.5">Breed</span>
-      <span className="font-headline font-bold text-lg text-[#0F172A] leading-none">Classifier</span>
+      <span className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none mb-0.5">BovIntelligence</span>
+      <span className="font-headline font-bold text-lg text-[#0F172A] leading-none">AI</span>
     </div>
   </div>
 );
@@ -75,15 +73,15 @@ export default function BreedClassifierApp() {
     setScanProgress(0);
     
     try {
-      setLoadingStep('Initializing AI...');
+      setLoadingStep('Clinical Validation...');
       setScanProgress(20);
       
       const analysis = await analyzeBovine({ photoDataUri: dataUri });
       
-      if (!analysis.isBovine) {
+      if (analysis.detected_status === "ERROR") {
         toast({
-          title: "Detection Failed",
-          description: "No bovine detected in frame.",
+          title: "Diagnostic Failure",
+          description: analysis.diagnostic_note || "Insufficient visual evidence markers.",
           variant: "destructive"
         });
         setIsScanning(false);
@@ -91,15 +89,21 @@ export default function BreedClassifierApp() {
         return;
       }
 
-      setScanProgress(60);
-      setLoadingStep('Compiling Profile...');
+      setScanProgress(70);
+      setLoadingStep('Genomic Profiling...');
 
       const entry: ScanEntry = {
-        id: `BC-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+        id: `BI-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
         timestamp: Date.now(),
         photoDataUri: dataUri,
-        breedName: analysis.breedName,
-        confidence: analysis.confidence,
+        breedName: analysis.primary_breed,
+        confidence: analysis.confidence_score,
+        speciesType: analysis.species_type,
+        detectedStatus: analysis.detected_status,
+        physiologicalAnalysis: analysis.physiological_analysis,
+        visualMarkers: analysis.visual_evidence_markers,
+        negativeConstraints: analysis.negative_constraints_check,
+        diagnosticNote: analysis.diagnostic_note,
         traits: analysis.traits,
         careGuide: analysis.careGuide
       };
@@ -115,8 +119,8 @@ export default function BreedClassifierApp() {
     } catch (error: any) {
       const isQuotaError = error.message?.includes('429');
       toast({
-        title: isQuotaError ? "Service Busy" : "Scan Error",
-        description: isQuotaError ? "Quota reached. Try in 60s." : "AI failed to respond.",
+        title: isQuotaError ? "Service Busy" : "Clinical Error",
+        description: isQuotaError ? "System quota reached. Retry in 60s." : "AI diagnostic unit failed.",
         variant: "destructive"
       });
       setIsScanning(false);
@@ -169,8 +173,8 @@ export default function BreedClassifierApp() {
         ) : activeTab === 'ledger' ? (
           <div className="space-y-6 animate-in slide-in-from-bottom-5">
             <div className="px-2">
-              <h2 className="text-2xl font-headline font-bold">Archives</h2>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{history.length} Records</p>
+              <h2 className="text-2xl font-headline font-bold">Clinical Archives</h2>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{history.length} Verified Records</p>
             </div>
             <ScanLedger history={history} onSelect={(e) => {setPhoto(e.photoDataUri); setResult(e);}} onDelete={handleDeleteEntry} />
           </div>
@@ -178,13 +182,13 @@ export default function BreedClassifierApp() {
           <div className="space-y-8 animate-in fade-in">
             <div className="px-2 space-y-4">
               <h1 className="text-3xl font-headline font-bold text-[#0F172A]">
-                Intelligent <span className="text-accent">Classification</span>
+                Genomic <span className="text-accent">Diagnostics</span>
               </h1>
               
-              <Card className="p-6 rounded-[2.5rem] bg-[#0F172A] text-white border-none shadow-2xl flex justify-between items-center">
+              <Card className="p-5 rounded-[2rem] bg-[#0F172A] text-white border-none shadow-2xl flex justify-between items-center">
                 <div className="space-y-1">
-                  <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Global Database</p>
-                  <p className="text-xl font-bold">Cloud Connected</p>
+                  <p className="text-[8px] font-bold text-white/40 uppercase tracking-widest">Precision Analysis</p>
+                  <p className="text-lg font-bold">Expert Active</p>
                 </div>
                 <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center">
                   <Activity className="h-5 w-5 text-accent" />
@@ -193,17 +197,17 @@ export default function BreedClassifierApp() {
             </div>
 
             <div className="px-2 grid grid-cols-2 gap-4">
-              <div className="bg-white/60 backdrop-blur-md p-6 rounded-[2rem] border border-white shadow-sm flex flex-col items-center">
-                <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center mb-3">
+              <div className="bg-white/60 backdrop-blur-md p-5 rounded-[2rem] border border-white shadow-sm flex flex-col items-center">
+                <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center mb-2">
                   <Cpu className="h-5 w-5 text-accent" />
                 </div>
-                <h4 className="font-bold text-[10px] uppercase">Neural Core</h4>
+                <h4 className="font-bold text-[9px] uppercase">Morphology</h4>
               </div>
-              <div onClick={() => setActiveTab('ledger')} className="bg-white/60 backdrop-blur-md p-6 rounded-[2rem] border border-white shadow-sm flex flex-col items-center cursor-pointer">
-                <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
+              <div onClick={() => setActiveTab('ledger')} className="bg-white/60 backdrop-blur-md p-5 rounded-[2rem] border border-white shadow-sm flex flex-col items-center cursor-pointer">
+                <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center mb-2">
                   <TrendingUp className="h-5 w-5 text-blue-500" />
                 </div>
-                <h4 className="font-bold text-[10px] uppercase">History</h4>
+                <h4 className="font-bold text-[9px] uppercase">Archives</h4>
               </div>
             </div>
 
@@ -212,7 +216,7 @@ export default function BreedClassifierApp() {
                  <div className="flex justify-between items-center px-1">
                     <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Recent Findings</h3>
                     <Button variant="link" onClick={() => setActiveTab('ledger')} className="text-accent font-bold text-[9px] uppercase p-0">
-                      View All <ArrowRight className="h-3 w-3 ml-1" />
+                      Vault <ArrowRight className="h-3 w-3 ml-1" />
                     </Button>
                  </div>
                  <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
@@ -234,7 +238,7 @@ export default function BreedClassifierApp() {
       <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-2xl border-t border-slate-100 h-20 px-10 flex items-center justify-between z-50 rounded-t-[2.5rem]">
         <Button variant="ghost" onClick={() => { setActiveTab('home'); setPhoto(null); setResult(null); }} className={`flex flex-col gap-1 h-auto p-0 ${activeTab === 'home' ? 'text-accent' : 'text-slate-300'}`}>
           <LayoutDashboard className="h-5 w-5" />
-          <span className="text-[8px] font-bold uppercase">Home</span>
+          <span className="text-[8px] font-bold uppercase">Main</span>
         </Button>
         
         <div className="relative -top-8">

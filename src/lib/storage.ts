@@ -1,4 +1,3 @@
-
 'use client';
 
 export interface ScanEntry {
@@ -6,7 +5,19 @@ export interface ScanEntry {
   timestamp: number;
   photoDataUri: string;
   breedName: string;
-  confidence: 'High' | 'Medium' | 'Low';
+  confidence: string;
+  // Advanced Diagnostics
+  speciesType: string;
+  detectedStatus: string;
+  physiologicalAnalysis: {
+    cranial: string;
+    thoracic: string;
+    body: string;
+  };
+  visualMarkers: string[];
+  negativeConstraints: string;
+  diagnosticNote: string;
+  // Legacy support & UI requirements
   traits: {
     origin: string;
     milkYieldEstimates: string;
@@ -14,7 +25,6 @@ export interface ScanEntry {
     temperament: string;
     physicalCharacteristics: string;
     commonUses: string;
-    specialNotes?: string;
   };
   careGuide: {
     nutritionTips: string;
