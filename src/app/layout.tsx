@@ -1,11 +1,23 @@
 
-import type {Metadata} from 'next';
+import type { Metadata } from 'next';
 import './globals.css';
+import { Alegreya, Inter } from 'next/font/google';
 
 export const metadata: Metadata = {
   title: 'BovIntelligence AI | Professional Bovine Insights',
   description: 'AI-driven cattle breed classification and genomic health management platform.',
 };
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+});
+
+const alegreya = Alegreya({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  style: ['normal', 'italic'],
+});
 
 export default function RootLayout({
   children,
@@ -14,12 +26,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
-      </head>
-      <body className="font-body antialiased selection:bg-accent/30">{children}</body>
+      <body className={`${inter.className} ${alegreya.className} font-body antialiased selection:bg-accent/30`}>
+        {children}
+      </body>
     </html>
   );
 }

@@ -1,0 +1,4 @@
+- [ ] Fix ESLint warning in `src/app/layout.tsx` by switching Google font `<link>` tags to `next/font/google`.
+- [ ] Fix ESLint warning in `src/components/AnalysisView.tsx` by disabling `@next/next/no-img-element` for the report/PDF `<img>` element.
+- [ ] Re-run `npm run lint` to confirm warnings are resolved.
+- [ ] Re-run `npx tsc --noEmit --pretty false` to ensure no TypeScript issues are introduced.
