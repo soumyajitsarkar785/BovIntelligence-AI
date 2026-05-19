@@ -32,26 +32,8 @@
     @apply border-border;
   }
   body {
-    @apply bg-[#F1F5F9] text-slate-900 overflow-x-hidden relative;
+    @apply bg-slate-50 text-slate-900 overflow-x-hidden relative;
     font-feature-settings: "rlig" 1, "calt" 1;
-  }
-  
-  /* Watermark Background */
-  body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url('https://picsum.photos/seed/breed_watermark/1200/1200');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: cover;
-    opacity: 0.04; 
-    pointer-events: none;
-    z-index: -1;
-    filter: grayscale(100%);
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -111,11 +93,11 @@
 }
 
 .premium-card {
-  @apply bg-white rounded-[2rem] border border-slate-100 shadow-sm transition-all duration-300 active:scale-[0.98];
+  @apply bg-white rounded-lg border border-slate-200 shadow-sm transition-all duration-300 active:scale-[0.98];
 }
 
 .glass-panel {
-  @apply bg-white/80 backdrop-blur-xl border border-white/40 shadow-xl;
+  @apply bg-white/90 backdrop-blur-xl border border-slate-200 shadow-sm;
 }
 
 .scrollbar-hide::-webkit-scrollbar {

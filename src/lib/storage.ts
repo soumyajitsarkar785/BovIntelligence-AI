@@ -9,6 +9,7 @@
 export interface ScanEntry {
   id: string;
   timestamp: number;
+  settingsSignature?: string;
   photoDataUri: string;
   breedName: string;
   confidence: string;
@@ -55,10 +56,13 @@ export function getHistory(): ScanEntry[] {
 /**
  * Smart Lookup: Finds if an image has been scanned before (Learning Mechanism).
  */
-export function findCachedScan(photoDataUri: string): ScanEntry | null {
+export function findCachedScan(photoDataUri: string, settingsSignature?: string): ScanEntry | null {
   const history = getHistory();
-  // We compare a slice of the data URI for performance and exact matching
-  return history.find(entry => entry.photoDataUri === photoDataUri) || null;
+  return history.find((entry) => {
+    const sameImage = entry.photoDataUri === photoDataUri;
+    if (!sameImage) return false;
+    return settingsSignature ? entry.settingsSignature === settingsSignature : true;
+  }) || null;
 }
 
 /**
@@ -85,18 +89,23 @@ export function saveScan(entry: Omit<ScanEntry, 'timestamp'>) {
 export function subscribeToHistory(callback: (history: ScanEntry[]) => void) {
   if (typeof window === 'undefined') return () => {};
 
-  const handleUpdate = (e: any) => {
+  const handleUpdate = (e: CustomEvent<ScanEntry[]>) => {
     callback(e.detail || getHistory());
   };
 
-  window.addEventListener('vault-update', handleUpdate);
-  window.addEventListener('storage', () => callback(getHistory()));
-  
+  const handleStorage = (e: StorageEvent) => {
+    if (e.key !== STORAGE_KEY) return;
+    callback(getHistory());
+  };
+
+  window.addEventListener('vault-update', handleUpdate as EventListener);
+  window.addEventListener('storage', handleStorage);
+
   callback(getHistory());
 
   return () => {
-    window.removeEventListener('vault-update', handleUpdate);
-    window.removeEventListener('storage', () => callback(getHistory()));
+    window.removeEventListener('vault-update', handleUpdate as EventListener);
+    window.removeEventListener('storage', handleStorage);
   };
 }
 

@@ -2,17 +2,15 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { 
-  Camera, 
-  LayoutDashboard, 
-  History as HistoryIcon,
-  Bell,
   ArrowLeft,
-  Activity,
-  Cpu,
   ArrowRight,
-  TrendingUp,
-  Fingerprint,
-  Info
+  Camera,
+  Database,
+  History as HistoryIcon,
+  LayoutDashboard,
+  Settings as SettingsIcon,
+  ShieldCheck,
+  UploadCloud,
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -22,19 +20,31 @@ import { useToast } from '@/hooks/use-toast';
 import { Toaster } from '@/components/ui/toaster';
 import { ScanLedger } from '@/components/ScanLedger';
 import { AnalysisView } from '@/components/AnalysisView';
-import { ScanOverlay } from '@/components/ScanOverlay';
+import { SettingsPanel } from '@/components/SettingsPanel';
 
-import { analyzeBovine } from '@/ai/flows/bovine-master-flow';
+import { requestBovineAnalysis } from '@/lib/analysis-api';
 import { saveScan, ScanEntry, deleteScan, subscribeToHistory, findCachedScan } from '@/lib/storage';
+import {
+  ANALYSIS_FOCUS_OPTIONS,
+  createSettingsSignature,
+  DEFAULT_APP_SETTINGS,
+  LIFE_STAGE_OPTIONS,
+  persistAppSettings,
+  REGION_OPTIONS,
+  REPORT_DEPTH_OPTIONS,
+  readAppSettings,
+  type AppSettings,
+} from '@/lib/app-settings';
+import { uiCopy } from '@/lib/i18n';
 
-const AppLogo = () => (
-  <div className="flex items-center gap-2">
-    <div className="h-9 w-9 bg-accent rounded-xl flex items-center justify-center shadow-lg shadow-accent/20">
-      <Fingerprint className="h-6 w-6 text-white" />
+const AppLogo = ({ subtitle }: { subtitle: string }) => (
+  <div className="flex items-center gap-3">
+    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-950">
+      <ShieldCheck className="h-5 w-5 text-white" />
     </div>
-    <div className="flex flex-col">
-      <span className="font-headline font-bold text-lg text-[#0F172A] leading-none">BovIntelligence</span>
-      <span className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none mt-0.5">AI Platform</span>
+    <div className="leading-none">
+      <span className="block font-headline text-lg font-bold text-slate-950">BovIntelligence</span>
+      <span className="mt-1 block text-xs font-semibold text-slate-500">{subtitle}</span>
     </div>
   </div>
 );
@@ -49,19 +59,65 @@ export default function BreedClassifierApp() {
   const [result, setResult] = useState<ScanEntry | null>(null);
   const [history, setHistory] = useState<ScanEntry[]>([]);
   const [loadingStep, setLoadingStep] = useState('');
-  const [activeTab, setActiveTab] = useState<'home' | 'ledger'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'ledger' | 'settings'>('home');
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_APP_SETTINGS);
+  const t = uiCopy[settings.language];
+  const navItems = [
+    { key: 'home' as const, label: t.nav.home, icon: LayoutDashboard },
+    { key: 'ledger' as const, label: t.nav.bank, icon: HistoryIcon },
+    { key: 'settings' as const, label: t.nav.settings, icon: SettingsIcon },
+  ];
+  const scanSummary = [
+    ANALYSIS_FOCUS_OPTIONS.find((item) => item.value === settings.analysisFocus)?.label,
+    REGION_OPTIONS.find((item) => item.value === settings.regionContext)?.label,
+    LIFE_STAGE_OPTIONS.find((item) => item.value === settings.lifeStage)?.label,
+    REPORT_DEPTH_OPTIONS.find((item) => item.value === settings.reportDepth)?.label,
+  ].filter(Boolean);
+
+  const resetScan = () => {
+    setPhoto(null);
+    setResult(null);
+    setIsScanning(false);
+    setScanProgress(0);
+    setLoadingStep('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   useEffect(() => {
+    setSettings(readAppSettings());
     const unsubscribe = subscribeToHistory((data) => {
       setHistory(data);
     });
     return () => unsubscribe();
   }, []);
 
+  const updateSettings = (patch: Partial<AppSettings>) => {
+    setSettings((current) => {
+      const next = { ...current, ...patch };
+      persistAppSettings(next);
+      return next;
+    });
+  };
+
+  const openTab = (tab: 'home' | 'ledger' | 'settings') => {
+    setActiveTab(tab);
+    resetScan();
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
+      reader.onerror = () => {
+        resetScan();
+        toast({
+          title: t.toast.uploadFailedTitle,
+          description: t.toast.uploadFailedDescription,
+          variant: "destructive"
+        });
+      };
       reader.onloadend = () => {
         const dataUri = reader.result as string;
         setPhoto(dataUri);
@@ -69,6 +125,7 @@ export default function BreedClassifierApp() {
         processImage(dataUri);
       };
       reader.readAsDataURL(file);
+      e.target.value = '';
     }
   };
 
@@ -78,41 +135,41 @@ export default function BreedClassifierApp() {
     
     // SMART CACHE (Learning Mechanism)
     // Check if this image was scanned before to save API Quota
-    const cachedResult = findCachedScan(dataUri);
+    const settingsSignature = createSettingsSignature(settings);
+    const cachedResult = settings.secureVault ? findCachedScan(dataUri, settingsSignature) : null;
     if (cachedResult) {
-      setLoadingStep('Retrieving learned data...');
+      setLoadingStep(t.loading.cached);
       setScanProgress(50);
       setTimeout(() => {
         setScanProgress(100);
         setResult(cachedResult);
         setIsScanning(false);
-        toast({ title: "Instant Match", description: "Result retrieved from BovIntelligence memory." });
+        toast({ title: t.toast.instantTitle, description: t.toast.instantDescription });
       }, 1000);
       return;
     }
 
     try {
-      setLoadingStep('Morphological Validation...');
+      setLoadingStep(t.loading.validation);
       setScanProgress(20);
-      
-      const analysis = await analyzeBovine({ photoDataUri: dataUri });
+      const analysis = await requestBovineAnalysis(dataUri, settings);
       
       if (analysis.detected_status === "ERROR") {
         toast({
-          title: "Diagnostic Failure",
+          title: t.toast.failureTitle,
           description: analysis.diagnostic_note || "Insufficient visual data for professional diagnosis.",
           variant: "destructive"
         });
-        setIsScanning(false);
-        setPhoto(null);
+        resetScan();
         return;
       }
 
       setScanProgress(70);
-      setLoadingStep('Genomic Analysis...');
+      setLoadingStep(t.loading.analysis);
 
       const entry: Omit<ScanEntry, 'timestamp'> = {
         id: `BI-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+        settingsSignature,
         photoDataUri: dataUri,
         breedName: analysis.primary_breed,
         confidence: analysis.confidence_score,
@@ -128,156 +185,215 @@ export default function BreedClassifierApp() {
 
       setTimeout(() => {
         setScanProgress(100);
-        saveScan(entry);
+        if (settings.secureVault) {
+          saveScan(entry);
+        }
         setResult({ ...entry, timestamp: Date.now() });
         setIsScanning(false);
-        toast({ title: "Analysis Complete", description: "Record secured in BovIntelligence memory." });
+        toast({
+          title: t.toast.completeTitle,
+          description: settings.secureVault ? t.toast.completeDescription : t.toast.completeNoVaultDescription
+        });
       }, 800);
 
-    } catch (error: any) {
-      const isQuotaError = error.message?.includes('429') || error.status === 429 || error.message?.includes('quota');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      const status = typeof error === 'object' && error !== null && 'status' in error
+        ? (error as { status?: number }).status
+        : undefined;
+      const isQuotaError = message.includes('429') || status === 429 || message.toLowerCase().includes('quota');
       
       toast({
-        title: isQuotaError ? "AI Limit Reached" : "Diagnostic Error",
+        title: isQuotaError ? t.toast.quotaTitle : t.toast.diagnosticTitle,
         description: isQuotaError 
-          ? "System quota busy. Please wait 60s or try a previously scanned image." 
-          : "An error occurred during analysis.",
+          ? t.toast.quotaDescription 
+          : t.toast.diagnosticDescription,
         variant: isQuotaError ? "default" : "destructive"
       });
-      setIsScanning(false);
-      setPhoto(null);
+      resetScan();
     }
   };
 
   const handleDeleteEntry = async (id: string) => {
     await deleteScan(id);
     if (result?.id === id) {
-      setResult(null);
-      setPhoto(null);
+      resetScan();
     }
-    toast({ title: "Record Purged", description: "Data removed from memory." });
+    toast({ title: t.toast.deleteTitle, description: t.toast.deleteDescription });
   };
 
   return (
-    <div className="min-h-screen flex flex-col font-body max-w-md mx-auto shadow-2xl relative bg-transparent pb-24">
-      <Toaster />
-      
-      <header className="h-16 px-6 flex items-center justify-between sticky top-0 bg-white/90 backdrop-blur-xl z-50 border-b border-slate-100 print:hidden">
-        {result || photo ? (
-          <Button variant="ghost" size="icon" onClick={() => {setPhoto(null); setResult(null);}} className="rounded-full bg-slate-50">
-            <ArrowLeft className="h-5 w-5 text-slate-700" />
-          </Button>
-        ) : <AppLogo />}
-        <Button variant="ghost" size="icon" className="rounded-full bg-slate-50 relative">
-          <Bell className="h-5 w-5 text-slate-500" />
-          <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 bg-accent rounded-full border border-white"></span>
-        </Button>
-      </header>
+    <div className="min-h-screen bg-slate-200 font-body text-slate-950">
+      <div className="relative mx-auto min-h-screen w-full max-w-md bg-slate-50 pb-24 shadow-2xl">
+        <Toaster />
 
-      <main className="flex-1 overflow-y-auto px-4 pt-4">
-        {isScanning ? (
-          <div className="h-[70vh] flex flex-col items-center justify-center space-y-12">
-            <div className="relative w-full aspect-square rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white">
-              {photo && <Image src={photo} alt="Scanning" fill className="object-cover brightness-50" />}
-              <ScanOverlay />
-              <div className="scan-line" />
-            </div>
-            <div className="w-full text-center space-y-4">
-              <p className="text-[10px] font-bold text-accent uppercase tracking-widest animate-pulse">{loadingStep}</p>
-              <div className="px-12">
-                <Progress value={scanProgress} className="h-1.5 bg-slate-200" />
-              </div>
-            </div>
+        <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur print:hidden">
+          <div className="flex min-h-16 items-center justify-between gap-3 px-4 py-3">
+            {result || photo ? (
+              <Button variant="outline" size="sm" onClick={resetScan} className="h-10 rounded-md border-slate-200">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+            ) : (
+              <AppLogo subtitle={t.brandSubtitle} />
+            )}
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => fileInputRef.current?.click()}
+              aria-label={t.home.primaryAction}
+              className="h-10 w-10 rounded-md border-slate-200"
+            >
+              <Camera className="h-4 w-4" />
+            </Button>
           </div>
-        ) : result ? (
-          <AnalysisView result={result} />
-        ) : activeTab === 'ledger' ? (
-          <div className="space-y-6 animate-in slide-in-from-bottom-5">
-            <div className="px-2">
-              <h2 className="text-2xl font-headline font-bold">Genomic Vault</h2>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{history.length} Professional Records</p>
-            </div>
-            <ScanLedger history={history} onSelect={(e) => {setPhoto(e.photoDataUri); setResult(e);}} onDelete={handleDeleteEntry} />
-          </div>
-        ) : (
-          <div className="space-y-8 animate-in fade-in">
-            <div className="px-2 space-y-4">
-              <h1 className="text-3xl font-headline font-bold text-[#0F172A]">
-                BovIntelligence <span className="text-accent">AI</span>
-              </h1>
-              
-              <Card className="p-5 rounded-[2rem] bg-[#0F172A] text-white border-none shadow-xl flex justify-between items-center overflow-hidden relative group">
-                <div className="absolute -right-4 -top-4 opacity-10 group-hover:rotate-12 transition-transform">
-                   <Info className="h-24 w-24 text-white" />
+        </header>
+
+        <main className="px-4 py-4">
+          {isScanning ? (
+            <section className="space-y-4">
+              <Card className="overflow-hidden rounded-lg border-slate-200 bg-white shadow-sm">
+                <div className="relative aspect-square w-full overflow-hidden bg-slate-900">
+                  {photo && <Image src={photo} alt="Scanning" fill className="object-cover brightness-75" />}
+                  <div className="scan-line" />
                 </div>
-                <div className="space-y-1 z-10">
-                  <p className="text-[8px] font-bold text-white/40 uppercase tracking-widest">System Readiness</p>
-                  <p className="text-lg font-bold">Diagnostics Active</p>
-                </div>
-                <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center z-10">
-                  <Activity className="h-5 w-5 text-accent" />
+                <div className="space-y-3 p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="text-sm font-semibold text-slate-700">{loadingStep || t.loading.validation}</p>
+                    <span className="text-sm font-bold text-slate-950">{scanProgress}%</span>
+                  </div>
+                  <Progress value={scanProgress} className="h-2 bg-slate-100" />
                 </div>
               </Card>
-            </div>
-
-            <div className="px-2 grid grid-cols-2 gap-4">
-              <div className="bg-white/70 backdrop-blur-md p-6 rounded-[2.5rem] border border-white shadow-sm flex flex-col items-center text-center transition-transform active:scale-95">
-                <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center mb-3">
-                  <Cpu className="h-5 w-5 text-accent" />
+            </section>
+          ) : result ? (
+            <AnalysisView result={result} language={settings.language} />
+          ) : activeTab === 'ledger' ? (
+            <section className="space-y-4 animate-in fade-in">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <h1 className="font-headline text-2xl font-bold text-slate-950">{t.genomicVault}</h1>
+                  <p className="text-sm font-semibold text-slate-500">{history.length} {t.professionalRecords}</p>
                 </div>
-                <h4 className="font-bold text-[9px] uppercase tracking-wider">Vision Intelligence</h4>
+                <Button onClick={() => fileInputRef.current?.click()} className="h-10 rounded-md bg-slate-950 text-white hover:bg-slate-800">
+                  <Camera className="mr-2 h-4 w-4" />
+                  Scan
+                </Button>
               </div>
-              <div onClick={() => setActiveTab('ledger')} className="bg-white/70 backdrop-blur-md p-6 rounded-[2.5rem] border border-white shadow-sm flex flex-col items-center text-center cursor-pointer transition-transform active:scale-95">
-                <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
-                  <TrendingUp className="h-5 w-5 text-blue-500" />
-                </div>
-                <h4 className="font-bold text-[9px] uppercase tracking-wider">Memory Bank</h4>
-              </div>
-            </div>
+              <ScanLedger history={history} onSelect={(e) => { setPhoto(e.photoDataUri); setResult(e); }} onDelete={handleDeleteEntry} />
+            </section>
+          ) : activeTab === 'settings' ? (
+            <SettingsPanel
+              settings={settings}
+              onChange={updateSettings}
+            />
+          ) : (
+            <div className="space-y-4 animate-in fade-in">
+              <section className="rounded-lg bg-slate-950 p-5 text-white shadow-sm">
+                <p className="text-xs font-bold uppercase tracking-widest text-white/50">{t.home.eyebrow}</p>
+                <h1 className="mt-3 font-headline text-3xl font-bold leading-tight">{t.home.title}</h1>
+                <p className="mt-3 text-sm font-medium leading-6 text-slate-300">{t.home.subtitle}</p>
 
-            {history.length > 0 && (
-              <div className="space-y-4 px-2 pb-6">
-                 <div className="flex justify-between items-center px-1">
-                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Recent Analysis</h3>
-                    <Button variant="link" onClick={() => setActiveTab('ledger')} className="text-accent font-bold text-[9px] uppercase p-0">
-                      View Bank <ArrowRight className="h-3 w-3 ml-1" />
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  <Button onClick={() => fileInputRef.current?.click()} className="h-11 rounded-md bg-accent px-5 text-white hover:bg-accent/90">
+                    <UploadCloud className="mr-2 h-4 w-4" />
+                    {t.home.primaryAction}
+                  </Button>
+                  <Button variant="outline" onClick={() => setActiveTab('ledger')} className="h-11 rounded-md border-white/20 bg-white/10 px-5 text-white hover:bg-white/15">
+                    <Database className="mr-2 h-4 w-4" />
+                    {t.home.recordsAction}
+                  </Button>
+                </div>
+              </section>
+
+              <Card className="rounded-lg border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-sm font-bold text-slate-950">{t.home.preferences}</h2>
+                  <Button variant="ghost" size="sm" onClick={() => setActiveTab('settings')} className="h-8 rounded-md px-2 text-xs">
+                    {t.nav.settings}
+                  </Button>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {scanSummary.map((item) => (
+                    <span key={item} className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </Card>
+
+              <section className="space-y-3 pt-2">
+                <div className="flex items-center justify-between gap-4">
+                  <h2 className="font-headline text-xl font-bold text-slate-950">{t.recentAnalysis}</h2>
+                  {history.length > 0 && (
+                    <Button variant="ghost" onClick={() => setActiveTab('ledger')} className="h-9 rounded-md px-2 text-slate-700">
+                      {t.viewBank}
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
-                 </div>
-                 <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
-                    {history.slice(0, 5).map(scan => (
-                      <div key={scan.id} onClick={() => { setPhoto(scan.photoDataUri); setResult(scan); }} className="min-w-[140px] aspect-[3/4] rounded-[2.5rem] overflow-hidden relative shadow-lg group cursor-pointer">
-                        <Image src={scan.photoDataUri} alt={scan.breedName} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
-                          <span className="text-[10px] font-bold text-white truncate">{scan.breedName}</span>
-                        </div>
-                      </div>
+                  )}
+                </div>
+
+                {history.length > 0 ? (
+                  <div className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
+                    {history.slice(0, 3).map((scan) => (
+                      <button
+                        key={scan.id}
+                        type="button"
+                        onClick={() => { setPhoto(scan.photoDataUri); setResult(scan); }}
+                        className="grid w-full grid-cols-[48px_1fr_auto] items-center gap-3 p-3 text-left transition-colors hover:bg-slate-50"
+                      >
+                        <span className="relative h-12 w-12 overflow-hidden rounded-lg bg-slate-100">
+                          <Image src={scan.photoDataUri} alt={scan.breedName} fill className="object-cover" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-bold text-slate-950">{scan.breedName}</span>
+                          <span className="mt-1 block text-xs font-semibold text-slate-500">#{scan.id}</span>
+                        </span>
+                        <span className="text-xs font-bold text-slate-600">{scan.confidence}</span>
+                      </button>
                     ))}
-                 </div>
-              </div>
-            )}
-          </div>
-        )}
-      </main>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-slate-300 bg-white px-6 py-8 text-center">
+                    <Database className="mx-auto h-8 w-8 text-slate-300" />
+                    <h3 className="mt-4 text-base font-bold text-slate-950">{t.home.recentEmpty}</h3>
+                    <p className="mt-1 text-sm font-medium text-slate-500">{t.home.recentEmptyHint}</p>
+                  </div>
+                )}
+              </section>
+            </div>
+          )}
+        </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-2xl border-t border-slate-100 h-20 px-12 flex items-center justify-between z-50 rounded-t-[2.5rem] print:hidden">
-        <Button variant="ghost" onClick={() => { setActiveTab('home'); setPhoto(null); setResult(null); }} className={`flex flex-col gap-1 h-auto p-0 ${activeTab === 'home' ? 'text-accent' : 'text-slate-300'}`}>
-          <LayoutDashboard className="h-5 w-5" />
-          <span className="text-[8px] font-bold uppercase">Home</span>
-        </Button>
-        
-        <div className="relative -top-8">
-          <Button onClick={() => fileInputRef.current?.click()} className="h-15 w-15 rounded-full bg-accent hover:bg-accent/90 shadow-2xl text-white ring-8 ring-white transition-all active:scale-90">
-            <Camera className="h-7 w-7" />
+        <nav className="fixed bottom-0 left-1/2 z-50 grid h-20 w-full max-w-md -translate-x-1/2 grid-cols-4 border-t border-slate-200 bg-white px-3 pb-3 pt-2 print:hidden">
+          {navItems.map(({ key, label, icon: Icon }) => (
+            <Button
+              key={key}
+              variant="ghost"
+              onClick={() => openTab(key)}
+              className={`h-full rounded-md px-2 ${activeTab === key ? 'text-accent' : 'text-slate-400'}`}
+            >
+              <span className="flex flex-col items-center gap-1">
+                <Icon className="h-5 w-5" />
+                <span className="text-[10px] font-bold">{label}</span>
+              </span>
+            </Button>
+          ))}
+          <Button
+            variant="ghost"
+            onClick={() => fileInputRef.current?.click()}
+            className="h-full rounded-md px-2 text-slate-400"
+          >
+            <span className="flex flex-col items-center gap-1">
+              <Camera className="h-5 w-5" />
+              <span className="text-[10px] font-bold">Scan</span>
+            </span>
           </Button>
-        </div>
+        </nav>
 
-        <Button variant="ghost" onClick={() => setActiveTab('ledger')} className={`flex flex-col gap-1 h-auto p-0 ${activeTab === 'ledger' ? 'text-accent' : 'text-slate-300'}`}>
-          <HistoryIcon className="h-5 w-5" />
-          <span className="text-[8px] font-bold uppercase">Bank</span>
-        </Button>
-      </nav>
-
-      <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
+        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
+      </div>
     </div>
   );
 }
